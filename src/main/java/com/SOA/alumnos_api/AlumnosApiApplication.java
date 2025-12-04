@@ -12,8 +12,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
-@EnableJpaRepositories(basePackages = "com.SOA.alumnos_api")
-@EntityScan(basePackages = "com.SOA.alumnos_api")
 public class AlumnosApiApplication {
 
     public static void main(String[] args) {
