@@ -14,4 +14,7 @@ COPY src ./src
 
 EXPOSE 8080
 
+# >>> PERFIL PARA RENDER <<<
+ENV SPRING_PROFILES_ACTIVE=prod
+
 CMD ["./mvnw", "spring-boot:run"]
