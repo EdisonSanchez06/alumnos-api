@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inicio</title>
+
+    <!-- BOOTSTRAP 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+          background: #f8f9fa;
+        }
+
+        .card-link:hover {
+          transform: translateY(-3px);
+          transition: 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ================= CHECK LOGIN ================= -->
+<script>
+    if (!localStorage.getItem("auth")) {
+        location.href = "login.html";
+    }
+</script>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container-fluid">
+
+        <a class="navbar-brand" href="#">SOA</a>
+
+        <div class="d-flex">
+            <span class="navbar-text me-3 text-light" id="usuario-actual"></span>
+            <button class="btn btn-outline-light btn-sm" onclick="logout()">Salir</button>
+        </div>
+
+    </div>
+</nav>
+
+
+<div class="container">
+
+    <h2 class="mb-4">Bienvenido 👋</h2>
+
+    <p class="lead mb-4">
+        Selecciona una opción:
+    </p>
+
+    <div class="row g-4">
+
+        <!-- ================= CARD ALUMNOS ================= -->
+        <div class="col-md-6">
+            <a href="alumnos.html" class="text-decoration-none">
+                <div class="card card-link">
+                    <div class="card-body text-center">
+
+                        <h3 class="mb-2 text-primary">
+                            <i class="bi bi-people"></i>
+                            Alumnos
+                        </h3>
+
+                        <p class="text-muted mb-0">
+                            CRUD completo de alumnos
+                        </p>
+
+                    </div>
+                </div>
+            </a>
+        </div>
+
+
+        <!-- ================= CARD CURSOS ================= -->
+        <div class="col-md-6">
+            <a href="cursos.html" class="text-decoration-none">
+                <div class="card card-link">
+                    <div class="card-body text-center">
+
+                        <h3 class="mb-2 text-success">
+                            <i class="bi bi-journal-bookmark-fill"></i>
+                            Cursos
+                        </h3>
+
+                        <p class="text-muted mb-0">
+                            CRUD de cursos por alumno
+                        </p>
+
+                    </div>
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= JS ================= -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- bootstrap icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+
+<script>
+    // Mostrar usuario logeado
+    const user = localStorage.getItem("user") || "Invitado";
+    document.getElementById("usuario-actual").innerHTML = user;
+</script>
+
+<script src="app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SOA - Registro</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+
+        body {
+          min-height: 100vh;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          font-family: system-ui,sans-serif;
+          background:
+          radial-gradient(circle at 15% 20%, rgba(52,95,144,.45), transparent 50%),
+          radial-gradient(circle at 85% 25%, rgba(31,59,87,.4), transparent 55%),
+          linear-gradient(135deg, #edf1f7, #e3e8ef);
+        }
+
+        .box {
+          width:450px;
+          background:white;
+          padding:35px;
+          border-radius:18px;
+          box-shadow:0 25px 60px rgba(0,0,0,.06);
+          text-align:center;
+        }
+
+        input {
+          border-radius:12px !important;
+          padding:12px;
+          background:#f8fafc;
+          border:2px solid transparent;
+          transition:.2s;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+    <h3 class="mb-4 fw-bold text-dark">Registro</h3>
+
+    <form onsubmit="registrar(event)">
+
+        <input id="cedula" class="form-control mb-3" placeholder="Cédula" required>
+
+        <input id="pass" type="password" class="form-control mb-3" placeholder="Contraseña" required>
+        <input id="pass2" type="password" class="form-control mb-3" placeholder="Repetir contraseña" required>
+
+        <button class="btn btn-primary w-100">Registrar</button>
+
+    </form>
+
+    <a href="login.html" class="link mt-3">Volver a iniciar sesión</a>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
