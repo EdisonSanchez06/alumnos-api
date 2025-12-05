@@ -32,6 +32,53 @@ function getHeaders() {
 
 
 // ======================================================================
+// ======================= LOGIN ========================================
+// ======================================================================
+
+async function login(e) {
+  e.preventDefault();
+
+  const username = document.getElementById("usuario").value;
+  const password = document.getElementById("password").value;
+
+  const auth = "Basic " + btoa(username + ":" + password);
+
+  try {
+    const res = await fetch(API_ALUMNOS, {
+      method: "GET",
+      headers: {
+        "Authorization": auth,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!res.ok) {
+      mostrarAlerta("Credenciales incorrectas", "danger");
+      return;
+    }
+
+    // guardar sesión
+    localStorage.setItem("auth", auth);
+    localStorage.setItem("user", username);
+
+    // detectar rol
+    if (username.toLowerCase() === "admin") {
+      localStorage.setItem("role", "ADMIN");
+      location.href = "index.html";
+    } else {
+      localStorage.setItem("role", "SECRETARIA");
+      location.href = "alumnos.html";
+    }
+
+  } catch (err) {
+    mostrarAlerta("Error conectando con el servidor", "danger");
+    console.error(err);
+  }
+}
+
+
+
+// ======================================================================
 // =============== SESION ===============================================
 // ======================================================================
 
@@ -68,6 +115,7 @@ function mostrarAlerta(msg, tipo = "primary") {
 function abrirModalNuevo() {
   modalCrear.show();
 }
+
 
 
 // ------ CREAR ------
