@@ -19,8 +19,13 @@ public class Curso {
     @Column(name = "nombre", nullable = false, length = 100)
     private String nombre;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    /**
+     * Importante:
+     * - EAGER → resuelve LazyInitializationException
+     * - referencedColumnName debe usar el nombre EXACTO de la columna
+     */
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "est_ced", referencedColumnName = "EST_CED", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({"cursos"}) // Evita recursión
     private Alumno alumno;
 }
