@@ -3,13 +3,11 @@
 // ======================================================================
 
 // URL de tu backend Spring Boot
-const API_BASE = "http://localhost:8080";
+const API_BASE = "https://alumnos-api-e65o.onrender.com";
 
 // ENDPOINTS reales del backend
 const API_ALUMNOS = API_BASE + "/api/alumnos";
 const API_CURSOS = API_BASE + "/api/cursos";
-const API_LOGIN = API_BASE + "/auth/login";
-const API_USERS = API_BASE + "/auth/register";
 
 let modalCrear;
 let modalEditar;
@@ -21,10 +19,13 @@ let modalEditar;
 
 function getHeaders() {
   const token = localStorage.getItem("auth");
-  const headers = { "Content-Type": "application/json" };
+
+  const headers = {
+    "Content-Type": "application/json"
+  };
 
   if (token) {
-    headers["Authorization"] = "Basic " + token;
+    headers["Authorization"] = token; // ya contiene "Basic xxxxxx"
   }
 
   return headers;
@@ -64,17 +65,21 @@ function mostrarAlerta(msg, tipo = "primary") {
 // ======================= LOGIN ========================================
 // ======================================================================
 
+// LOGIN usando Basic Auth
 async function login(e) {
   e.preventDefault();
 
   const username = document.getElementById("usuario").value;
   const password = document.getElementById("password").value;
-  const token = btoa(username + ":" + password);
+  const auth = "Basic " + btoa(username + ":" + password);
 
   try {
-    const res = await fetch(API_LOGIN, {
+    // pedimos listádo (solo para validar)
+    const res = await fetch(API_ALUMNOS, {
       method: "GET",
-      headers: { "Authorization": "Basic " + token }
+      headers: {
+        "Authorization": auth
+      }
     });
 
     if (!res.ok) {
@@ -82,19 +87,16 @@ async function login(e) {
       return;
     }
 
-    const data = await res.json();
+    // Guardar sesión local
+    localStorage.setItem("auth", auth);
+    localStorage.setItem("user", username);
 
-    // guardar sesión
-    localStorage.setItem("auth", token);
-    localStorage.setItem("user", data.user);
-    localStorage.setItem("role", data.role);
-
-    const rol = (data.role || "").toLowerCase();
-
-    // redireccionar por rol
-    if (rol === "admin") {
+    // determinar rol por usuario (temporal)
+    if (username === "admin") {
+      localStorage.setItem("role", "ADMIN");
       location.href = "index.html";
     } else {
+      localStorage.setItem("role", "SECRETARIA");
       location.href = "alumnos.html";
     }
 
@@ -135,8 +137,8 @@ async function listarAlumnos() {
       <td>${a.estTel}</td>
       <td>${a.estDir}</td>
       <td class="text-center admin-only">
-        <button class="btn btn-sm btn-warning me-1 admin-only" onclick="cargarEditarAlumno('${a.estCed}')">Editar</button>
-        <button class="btn btn-sm btn-danger admin-only" onclick="eliminarAlumno('${a.estCed}')">Eliminar</button>
+        <button class="btn btn-sm btn-warning me-1 admin-only">Editar</button>
+        <button class="btn btn-sm btn-danger admin-only">Eliminar</button>
       </td>
     </tr>
   `).join("");
@@ -171,8 +173,8 @@ async function cargarCursos() {
       <td>${c.alumnoCed || ""}</td>
       <td>${c.alumnoNombreCompleto || ""}</td>
       <td class="text-center admin-only">
-        <button class="btn btn-sm btn-warning me-1 admin-only" onclick="cargarEditarCurso(${c.id})">Editar</button>
-        <button class="btn btn-sm btn-danger admin-only" onclick="eliminarCurso(${c.id})">Eliminar</button>
+        <button class="btn btn-sm btn-warning me-1 admin-only">Editar</button>
+        <button class="btn btn-sm btn-danger admin-only">Eliminar</button>
       </td>
     </tr>
   `).join("");
@@ -185,63 +187,47 @@ async function cargarCursos() {
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  const rol = (localStorage.getItem("role") || "").toLowerCase();
+  const rol = localStorage.getItem("role");
   const pagina = window.location.pathname.toLowerCase().split("/").pop();
 
-  // ============================================================
-  // NO VALIDAR NADA EN LOGIN.HTML
-  // ============================================================
+  // NO validar en login
   if (pagina === "login.html" || pagina === "") return;
 
-  // ============================================================
-  // VALIDAR SESIÓN
-  // ============================================================
+  // VALIDAR SESION
   if (!rol) {
     location.href = "login.html";
     return;
   }
 
-  // ============================================================
-  // SECRETARIA: SOLO PUEDE VER alumnos.html
-  // ============================================================
-  if (rol === "secretaria") {
+  // SECRETARIA: SOLO alumnos.html
+  if (rol === "SECRETARIA") {
 
     if (pagina !== "alumnos.html") {
       location.href = "alumnos.html";
       return;
     }
 
-    // Ocultar botones admin
+    // ocultar botones admin
     document.querySelectorAll(".admin-only")
       .forEach(el => el.style.display = "none");
   }
 
-  // ============================================================
-  // MOSTRAR NOMBRE EN NAV
-  // ============================================================
+  // MOSTRAR USUARIO EN NAV
   const usuarioSpan = document.getElementById("usuario-actual");
   if (usuarioSpan) usuarioSpan.textContent = localStorage.getItem("user") || "";
 
-  // ============================================================
   // MODALES
-  // ============================================================
   const mc = document.getElementById("modalCrear");
   if (mc) modalCrear = new bootstrap.Modal(mc);
 
   const me = document.getElementById("modalEditar");
   if (me) modalEditar = new bootstrap.Modal(me);
 
-  // ============================================================
   // ALUMNOS
-  // ============================================================
   if (document.getElementById("tbody-alumnos")) listarAlumnos();
 
-  // ============================================================
-  // CURSOS (solo admin)
-  // ============================================================
-  if (rol === "admin" && document.getElementById("cursos-table")) {
+  // CURSOS solo admin
+  if (rol === "ADMIN" && document.getElementById("cursos-table")) {
     cargarCursos();
-    cargarAlumnosCombo("curso-alumno");
-    cargarAlumnosCombo("editAlumno");
   }
 });
