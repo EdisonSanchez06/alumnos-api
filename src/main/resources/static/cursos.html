@@ -12,7 +12,6 @@
 
     <style>
 
-        /* FONDO PREMIUM MASCULINO */
         body {
           min-height: 100vh;
           font-family: system-ui, sans-serif;
@@ -24,14 +23,12 @@
           padding-bottom: 90px;
         }
 
-        /* NAVBAR */
         .navbar {
           backdrop-filter: blur(10px);
           background: rgba(255,255,255,.85) !important;
           border-bottom: 1px solid rgba(0,0,0,.05);
         }
 
-        /* CONTENEDOR */
         .container-box {
           background: white;
           border-radius: 18px;
@@ -46,7 +43,6 @@
           color: #0f172a;
         }
 
-        /* BOTONES */
         .btn-main {
           background: #4a8afe;
           border: none;
@@ -58,62 +54,6 @@
 
         .btn-main:hover {
           background: #3a74d8;
-        }
-
-        .btn-secondary-soft {
-          background: #e5e7eb;
-          border: none;
-          border-radius: 10px;
-        }
-
-        .btn-secondary-soft:hover {
-          background: #d4d7dd;
-        }
-
-        .btn-light-soft {
-          background: #f8fafc;
-          border: none;
-          border-radius: 10px;
-        }
-
-        .btn-light-soft:hover {
-          background: #e8eaee;
-        }
-
-        /* INPUTS */
-        input.form-control, select.form-select {
-          border-radius: 12px;
-          border: 2px solid transparent;
-          background: #f8fafc;
-          transition: .2s;
-        }
-
-        input.form-control:focus, select.form-select:focus {
-          border-color: #4a8afe;
-          box-shadow: 0 0 0 2px rgba(74,138,254,.25);
-        }
-
-        /* TABLA */
-        table {
-          border-radius: 16px;
-          overflow: hidden;
-        }
-
-        thead {
-          background: #f1f5f9;
-          font-weight: 600;
-          color: #0f172a;
-        }
-
-        .table-hover tbody tr:hover {
-          background: rgba(52,95,144,.07);
-        }
-
-        /* ALERTA */
-        .alert {
-          border-radius: 14px;
-          border: none;
-          font-weight: 600;
         }
 
     </style>
@@ -139,7 +79,7 @@
 
         <div class="d-flex align-items-center">
 
-            <a href="index.html" class="btn-secondary-soft btn-sm me-3">
+            <a href="index.html" class="btn btn-secondary-soft btn-sm me-3">
                 <i class="bi bi-arrow-left"></i> Inicio
             </a>
 
@@ -159,20 +99,18 @@
 <!-- CONTENIDO -->
 <div class="container container-box">
 
-    <!-- ALERTAS -->
     <div id="alerta"></div>
 
-    <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="title">Cursos</h2>
 
-        <button class="btn-main" data-bs-toggle="modal" data-bs-target="#modalCrear">
-            <i class="bi bi-bookmarks"></i> Nuevo curso
+        <button class="btn-main admin-only" onclick="modalCrear.show()">
+            <i class="bi bi-bookmarks"></i> Nuevo Curso
         </button>
     </div>
 
 
-    <!-- TABLA CURSOS -->
+    <!-- TABLA -->
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead>
@@ -181,10 +119,12 @@
                 <th>Curso</th>
                 <th>Cédula</th>
                 <th>Alumno</th>
-                <th class="text-center">Acciones</th>
+                <th class="text-center admin-only">Acciones</th>
             </tr>
             </thead>
+
             <tbody id="cursos-table"></tbody>
+
         </table>
     </div>
 
@@ -219,7 +159,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Alumno</label>
                             <select id="curso-alumno" class="form-select" required>
-                                <!-- se llena desde app.js -->
+                                <!-- se llena desde JS -->
                             </select>
                         </div>
 
@@ -270,7 +210,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Alumno</label>
                             <select id="editAlumno" class="form-select" required>
-                                <!-- se llena desde app.js -->
+                                <!-- se llena desde JS -->
                             </select>
                         </div>
 
@@ -289,7 +229,6 @@
         </div>
     </div>
 </div>
-
 
 
 <!-- JS -->
