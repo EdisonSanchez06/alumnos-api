@@ -2,15 +2,13 @@
 // =============== CONFIG GLOBAL ========================================
 // ======================================================================
 
-// URL del backend
 const API_BASE = "https://alumnos-api-e65o.onrender.com";
-
-// ENDPOINTS
 const API_ALUMNOS = API_BASE + "/api/alumnos";
 const API_CURSOS = API_BASE + "/api/cursos";
 
 let modalCrear;
 let modalEditar;
+
 
 
 // ======================================================================
@@ -32,6 +30,7 @@ function getHeaders() {
 }
 
 
+
 // ======================================================================
 // =============== SESION ===============================================
 // ======================================================================
@@ -40,6 +39,7 @@ function logout() {
   localStorage.clear();
   location.href = "login.html";
 }
+
 
 
 // ======================================================================
@@ -59,53 +59,12 @@ function mostrarAlerta(msg, tipo = "primary") {
 }
 
 
-// ======================================================================
-// ======================= LOGIN ========================================
-// ======================================================================
-
-async function login(e) {
-  e.preventDefault();
-
-  const username = document.getElementById("usuario").value;
-  const password = document.getElementById("password").value;
-
-  const auth = "Basic " + btoa(username + ":" + password);
-
-  try {
-    const res = await fetch(API_ALUMNOS, {
-      method: "GET",
-      headers: { "Authorization": auth }
-    });
-
-    if (!res.ok) {
-      mostrarAlerta("Credenciales incorrectas", "danger");
-      return;
-    }
-
-    localStorage.setItem("auth", auth);
-    localStorage.setItem("user", username);
-
-    // detectar rol correcto
-    if (username.toLowerCase() === "admin") {
-      localStorage.setItem("role", "ADMIN");
-      location.href = "index.html";
-    } else {
-      localStorage.setItem("role", "SECRETARIA");
-      location.href = "alumnos.html";
-    }
-
-  } catch (err) {
-    mostrarAlerta("Error conectando con el servidor", "danger");
-    console.error(err);
-  }
-}
-
-
 
 // ======================================================================
 // =============== CRUD ALUMNOS ==========================================
 // ======================================================================
 
+// abrir modal crear
 function abrirModalNuevo() {
   modalCrear.show();
 }
@@ -143,14 +102,13 @@ async function crearAlumno(e) {
 }
 
 
+
 // ------ LISTAR ------
 async function listarAlumnos() {
   const tbody = document.getElementById("tbody-alumnos");
   if (!tbody) return;
 
-  const res = await fetch(API_ALUMNOS, {
-    headers: getHeaders()
-  });
+  const res = await fetch(API_ALUMNOS, { headers: getHeaders() });
 
   if (res.status === 401) return logout();
 
@@ -161,6 +119,43 @@ async function listarAlumnos() {
 
   const data = await res.json();
 
+  renderTabla(data);
+}
+
+
+
+// ------ BUSCAR ------
+async function buscarAlumno(e) {
+  e.preventDefault();
+
+  const ced = document.getElementById("buscarCed").value.trim();
+
+  if (ced === "") {
+    listarAlumnos();
+    return;
+  }
+
+  const res = await fetch(API_ALUMNOS + "/" + ced, {
+    headers: getHeaders()
+  });
+
+  if (!res.ok) {
+    mostrarAlerta("Alumno no encontrado", "warning");
+    return;
+  }
+
+  const a = await res.json();
+
+  renderTabla([a]);
+}
+
+
+
+// ------ RENDER TABLA ------
+function renderTabla(data) {
+
+  const tbody = document.getElementById("tbody-alumnos");
+
   tbody.innerHTML = data.map(a => `
      <tr>
       <td>${a.estCed}</td>
@@ -168,7 +163,7 @@ async function listarAlumnos() {
       <td>${a.estApe}</td>
       <td>${a.estTel}</td>
       <td>${a.estDir}</td>
-      <td class="text-center admin-only">
+      <td class="text-center">
         <button class="btn btn-sm btn-warning me-1" onclick="cargarEditarAlumno('${a.estCed}')">Editar</button>
         <button class="btn btn-sm btn-danger" onclick="eliminarAlumno('${a.estCed}')">Eliminar</button>
       </td>
@@ -177,11 +172,10 @@ async function listarAlumnos() {
 }
 
 
+
 // ------ CARGAR EDITAR ------
 async function cargarEditarAlumno(ced) {
-  const res = await fetch(API_ALUMNOS + "/" + ced, {
-    headers: getHeaders()
-  });
+  const res = await fetch(API_ALUMNOS + "/" + ced, { headers: getHeaders() });
 
   const a = await res.json();
 
@@ -193,6 +187,7 @@ async function cargarEditarAlumno(ced) {
 
   modalEditar.show();
 }
+
 
 
 // ------ EDITAR ------
@@ -208,7 +203,7 @@ async function editarAlumno(e) {
     estDir: document.getElementById("editDir").value
   };
 
-  const res = await fetch(API_ALUMNOS + "/" + ced, {
+  await fetch(API_ALUMNOS + "/" + ced, {
     method: "PUT",
     headers: getHeaders(),
     body: JSON.stringify(body)
@@ -218,6 +213,7 @@ async function editarAlumno(e) {
   listarAlumnos();
   mostrarAlerta("Alumno actualizado", "success");
 }
+
 
 
 // ------ ELIMINAR ------
@@ -235,127 +231,6 @@ async function eliminarAlumno(ced) {
 
 
 // ======================================================================
-// ========================= CRUD CURSOS ================================
-// ======================================================================
-
-
-async function cargarAlumnosCombo(id) {
-  const sel = document.getElementById(id);
-  if (!sel) return;
-
-  const res = await fetch(API_ALUMNOS, {
-    headers: getHeaders()
-  });
-
-  const data = await res.json();
-
-  sel.innerHTML = data.map(a =>
-    `<option value="${a.estCed}">${a.estNom} ${a.estApe}</option>`
-  ).join("");
-}
-
-
-// ------ LISTAR CURSOS ------
-async function cargarCursos() {
-  const tbody = document.getElementById("cursos-table");
-  if (!tbody) return;
-
-  const res = await fetch(API_CURSOS, {
-    headers: getHeaders()
-  });
-
-  const cursos = await res.json();
-
-  tbody.innerHTML = cursos.map(c => `
-    <tr>
-      <td>${c.id}</td>
-      <td>${c.nombre}</td>
-      <td>${c.alumnoCed}</td>
-      <td>${c.alumnoNombreCompleto}</td>
-      <td class="text-center admin-only">
-        <button onclick="cargarEditarCurso(${c.id})" class="btn btn-sm btn-warning me-1">Editar</button>
-        <button onclick="eliminarCurso(${c.id})" class="btn btn-sm btn-danger">Eliminar</button>
-      </td>
-    </tr>
-  `).join("");
-}
-
-
-// ------ CREAR ------
-async function crearCurso(e) {
-  e.preventDefault();
-
-  const data = {
-    nombre: document.getElementById("curso-nombre").value,
-    alumnoCed: document.getElementById("curso-alumno").value
-  };
-
-  const res = await fetch(API_CURSOS, {
-    method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(data)
-  });
-
-  modalCrear.hide();
-  cargarCursos();
-  mostrarAlerta("Curso creado", "success");
-}
-
-
-// ------ CARGAR EDITAR ------
-async function cargarEditarCurso(id) {
-  const res = await fetch(API_CURSOS + "/" + id, {
-    headers: getHeaders()
-  });
-
-  const c = await res.json();
-
-  document.getElementById("editId").value = c.id;
-  document.getElementById("editNombre").value = c.nombre;
-  document.getElementById("editAlumno").value = c.alumnoCed;
-
-  modalEditar.show();
-}
-
-
-// ------ EDITAR ------
-async function editarCurso(e) {
-  e.preventDefault();
-
-  const id = document.getElementById("editId").value;
-
-  const data = {
-    nombre: document.getElementById("editNombre").value,
-    alumnoCed: document.getElementById("editAlumno").value
-  };
-
-  await fetch(API_CURSOS + "/" + id, {
-    method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify(data)
-  });
-
-  modalEditar.hide();
-  cargarCursos();
-  mostrarAlerta("Curso actualizado", "success");
-}
-
-
-// ------ ELIMINAR ------
-async function eliminarCurso(id) {
-  if (!confirm("¿Eliminar curso?")) return;
-
-  await fetch(API_CURSOS + "/" + id, {
-    method: "DELETE",
-    headers: getHeaders()
-  });
-
-  cargarCursos();
-}
-
-
-
-// ======================================================================
 // ========================== AUTO INIT =================================
 // ======================================================================
 
@@ -366,29 +241,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (pagina === "login.html" || pagina === "") return;
 
-  // SESIÓN
   if (!rol) return logout();
 
 
-  // ========= RESTRICCIONES SECRETARIA ==========
+
+  // ========= SECRETARIA =========
   if (rol === "SECRETARIA") {
 
-    if (pagina !== "alumnos.html") {
-      location.href = "alumnos.html";
-      return;
-    }
-
-    document.querySelectorAll(".admin-only")
-      .forEach(el => el.style.display = "none");
+    // ocultar boton inicio
+    const btnInicio = document.getElementById("btn-inicio");
+    if (btnInicio) btnInicio.style.display = "none";
   }
 
 
-  // ========= NAVBAR ==========
+  // ========= NAVBAR =========
   const usuarioSpan = document.getElementById("usuario-actual");
   if (usuarioSpan) usuarioSpan.textContent = localStorage.getItem("user");
 
 
-  // ========= MODALES ==========
+  // ========= MODALES =========
   const mc = document.getElementById("modalCrear");
   if (mc) modalCrear = new bootstrap.Modal(mc);
 
@@ -396,17 +267,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (me) modalEditar = new bootstrap.Modal(me);
 
 
-  // ========= ALUMNOS ==========
+  // ========= ALUMNOS =========
   if (document.getElementById("tbody-alumnos")) {
     listarAlumnos();
-  }
-
-
-  // ========= CURSOS (solo admin) ==========
-  if (rol === "ADMIN" && document.getElementById("cursos-table")) {
-    cargarAlumnosCombo("curso-alumno");
-    cargarAlumnosCombo("editAlumno");
-    cargarCursos();
   }
 
 });
