@@ -8,7 +8,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
-
 @Entity
 @Table(name = "usuario")
 @Getter
@@ -32,44 +31,30 @@ public class Usuario implements UserDetails {
     @Column(nullable = false)
     private Rol role;
 
-    /**
-     * Cedula del alumno asociado (si role = USER)
-     * Si role = ADMIN, puede ser null
-     */
     @Column(name = "cedula", length = 20)
     private String cedula;
 
     // ============================
-    //  ROLE -> AUTHORITIES
+    //  USERDETAILS CORE
     // ============================
+
+    @Override
+    public String getUsername() {
+        return username;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Spring Security espera "ROLE_ADMIN", "ROLE_SECRETARIA", etc.
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
-
-    // ============================
-    //  USERDETAILS OVERRIDES
-    // ============================
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
+    @Override public boolean isAccountNonExpired() { return true; }
+    @Override public boolean isAccountNonLocked() { return true; }
+    @Override public boolean isCredentialsNonExpired() { return true; }
+    @Override public boolean isEnabled() { return true; }
 }
