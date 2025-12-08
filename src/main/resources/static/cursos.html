@@ -6,18 +6,16 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-
-    <!-- jsPDF para exportar PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
-<body>
+<body class="bg-light">
 
 <!-- SIDEBAR -->
 <div class="sidebar">
     <h4>Menú</h4>
     <a href="alumnos.html">Alumnos</a>
     <a href="cursos.html">Cursos</a>
+    <a href="dashboard.html">Dashboard</a>
     <a onclick="logout()" style="cursor:pointer;color:red">Salir</a>
 </div>
 
@@ -29,78 +27,90 @@
 <!-- CONTENIDO -->
 <div class="content">
 
-    <div id="alerta"></div>
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
 
-    <div class="card p-3 mb-4">
-        <h5>Crear Curso</h5>
-
-        <form onsubmit="crearCurso(event)" class="row g-3">
-
-            <div class="col-md-6">
-                <input class="form-control" name="nombre" placeholder="Nombre del Curso" required>
-            </div>
-
-            <div class="col-md-6">
-                <input class="form-control" name="alumnoCed" placeholder="Cédula del Alumno" required>
-            </div>
-
-            <div class="col-md-12">
-                <button class="btn btn-success">Guardar</button>
-            </div>
-
-        </form>
+    <div class="card p-3 mb-4 d-flex flex-row justify-content-between align-items-center">
+        <h5 class="m-0">Cursos</h5>
+        <div class="d-flex gap-2">
+            <input class="form-control form-control-sm search-input" onkeyup="filtrarTabla('tbodyCursos',this.value)" placeholder="Buscar...">
+            <button class="btn btn-sm btn-primary" onclick="abrirModalCrearCurso()">Nuevo Curso</button>
+        </div>
     </div>
 
-    <!-- LISTA -->
-    <div class="card p-3 mb-4">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="m-0">Lista de Cursos</h5>
-            <input class="form-control search-input" onkeyup="filtrarTabla('tbodyCursos',this.value)" placeholder="Buscar...">
-        </div>
-
-        <table class="table table-striped mt-3">
+    <div class="card p-3">
+        <table class="table table-striped table-hover mb-0">
             <thead class="table-dark">
             <tr>
                 <th>ID</th>
                 <th>Nombre</th>
                 <th>Alumno</th>
-                <th>Opciones</th>
+                <th style="width: 150px;">Opciones</th>
             </tr>
             </thead>
             <tbody id="tbodyCursos"></tbody>
         </table>
-
-        <button class="btn btn-danger" onclick="exportarPDF('tbodyCursos','Lista de Cursos')">
-            Exportar PDF
-        </button>
-
-    </div>
-
-    <!-- EDITAR -->
-    <div class="card p-3 mb-4">
-        <h5>Editar Curso</h5>
-
-        <form onsubmit="actualizarCurso(event)" class="row g-3">
-
-            <div class="col-md-3">
-                <input class="form-control" id="idE" disabled placeholder="ID">
-            </div>
-            <div class="col-md-5">
-                <input class="form-control" id="nombreE" placeholder="Nombre">
-            </div>
-            <div class="col-md-4">
-                <input class="form-control" id="alumnoCedE" placeholder="Cédula Alumno">
-            </div>
-
-            <div class="col-md-12">
-                <button class="btn btn-warning">Actualizar</button>
-            </div>
-
-        </form>
     </div>
 
 </div>
 
+<!-- MODAL CREAR CURSO -->
+<div class="modal fade" id="modalCrearCurso" tabindex="-1">
+    <div class="modal-dialog">
+        <form class="modal-content" id="formCrearCurso" onsubmit="crearCurso(event)">
+            <div class="modal-header">
+                <h5 class="modal-title">Nuevo Curso</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Nombre del Curso*</label>
+                    <input class="form-control" name="nombre" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Cédula Alumno*</label>
+                    <input class="form-control" name="alumnoCed" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-success" type="submit">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL EDITAR CURSO -->
+<div class="modal fade" id="modalEditarCurso" tabindex="-1">
+    <div class="modal-dialog">
+        <form class="modal-content" id="formEditarCurso" onsubmit="actualizarCurso(event)">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Curso</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">ID</label>
+                    <input class="form-control" id="idE" readonly>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Nombre*</label>
+                    <input class="form-control" id="nombreE" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Cédula Alumno*</label>
+                    <input class="form-control" id="alumnoCedE" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-warning" type="submit">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="app.js"></script>
 <script>
     protegerPaginaCursos();
