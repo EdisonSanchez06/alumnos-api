@@ -17,13 +17,9 @@ let modalEditar;
 function getHeaders() {
   const token = localStorage.getItem("auth");
 
-  const headers = {
-    "Content-Type": "application/json"
-  };
+  const headers = { "Content-Type": "application/json" };
 
-  if (token) {
-    headers["Authorization"] = token;
-  }
+  if (token) headers["Authorization"] = token;
 
   return headers;
 }
@@ -59,7 +55,6 @@ async function login(e) {
     localStorage.setItem("auth", auth);
     localStorage.setItem("user", username);
 
-    // role by username
     if (username.toLowerCase() === "admin") {
       localStorage.setItem("role", "ADMIN");
       location.href = "index.html";
@@ -109,7 +104,6 @@ function mostrarAlerta(msg, tipo = "primary") {
 // =============== CRUD ALUMNOS ==========================================
 // ======================================================================
 
-// abrir modal crear
 function abrirModalNuevo() {
   modalCrear.show();
 }
@@ -223,7 +217,6 @@ function renderTablaAlumnos(data) {
 // ------ CARGAR EDITAR ------
 async function cargarEditarAlumno(ced) {
   const res = await fetch(API_ALUMNOS + "/" + ced, { headers: getHeaders() });
-
   const a = await res.json();
 
   document.getElementById("editCed").value = a.estCed;
@@ -307,20 +300,20 @@ function renderTablaCursos(data) {
   document.getElementById("cursos-table").innerHTML =
     data.map(c => `
       <tr>
-        <td>${c.curId}</td>
-        <td>${c.curNombre}</td>
+        <td>${c.id}</td>
+        <td>${c.nombre}</td>
         <td>${c.alumno?.estCed || ""}</td>
         <td>${c.alumno ? (c.alumno.estNom + " " + c.alumno.estApe) : ""}</td>
 
         <td class="text-center admin-only">
           ${ rol === "ADMIN" ? `
-            <button class="btn btn-sm btn-warning me-1" onclick="cargarEditarCurso(${c.curId})">
+            <button class="btn btn-sm btn-warning me-1" onclick="cargarEditarCurso(${c.id})">
                 Editar
             </button>
-            <button class="btn btn-sm btn-danger" onclick="eliminarCurso(${c.curId})">
+            <button class="btn btn-sm btn-danger" onclick="eliminarCurso(${c.id})">
                 Eliminar
             </button>
-          ` : ""}
+          ` : "" }
         </td>
       </tr>
     `).join("");
@@ -333,8 +326,10 @@ async function crearCurso(e) {
   e.preventDefault();
 
   const body = {
-    curNombre: document.getElementById("curso-nombre").value,
-    estCed: document.getElementById("curso-alumno").value
+    nombre: document.getElementById("curso-nombre").value,
+    alumno: {
+      estCed: document.getElementById("curso-alumno").value
+    }
   };
 
   const res = await fetch(API_CURSOS, {
@@ -364,8 +359,8 @@ async function cargarEditarCurso(id) {
 
   const c = await res.json();
 
-  document.getElementById("editId").value = c.curId;
-  document.getElementById("editNombre").value = c.curNombre;
+  document.getElementById("editId").value = c.id;
+  document.getElementById("editNombre").value = c.nombre;
 
   await cargarAlumnosEnSelect("editAlumno");
   document.getElementById("editAlumno").value = c.alumno.estCed;
@@ -382,8 +377,10 @@ async function editarCurso(e) {
   const id = document.getElementById("editId").value;
 
   const body = {
-    curNombre: document.getElementById("editNombre").value,
-    estCed: document.getElementById("editAlumno").value
+    nombre: document.getElementById("editNombre").value,
+    alumno: {
+      estCed: document.getElementById("editAlumno").value
+    }
   };
 
   await fetch(API_CURSOS + "/" + id, {
@@ -472,17 +469,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // ========= CURSOS =========
   if (document.getElementById("cursos-table")) {
 
-    // cargar alumnos en select para crear
     cargarAlumnosEnSelect("curso-alumno");
 
-    // listar cursos
     listarCursos();
 
-    // mostrar/ocultar botones según rol
     if (rol !== "ADMIN") {
-      document.querySelectorAll(".admin-only").forEach(el => {
-        el.style.display = "none";
-      });
+      document.querySelectorAll(".admin-only").forEach(el =>
+        el.style.display = "none"
+      );
     }
   }
 
