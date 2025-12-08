@@ -148,7 +148,7 @@ async function listarAlumnos() {
   const tbody = document.getElementById("tbody-alumnos");
   if (!tbody) return;
 
-  const res = await fetch(API_ALUMNOS, { headers: getHeaders() });
+  const res = await fetch(API_ALUMOS, { headers: getHeaders() });
 
   if (res.status === 401) return logout();
 
@@ -216,7 +216,7 @@ function renderTablaAlumnos(data) {
 
 // ------ CARGAR EDITAR ------
 async function cargarEditarAlumno(ced) {
-  const res = await fetch(API_ALUMNOS + "/" + ced, { headers: getHeaders() });
+  const res = await fetch(API_ALUMOS + "/" + ced, { headers: getHeaders() });
   const a = await res.json();
 
   document.getElementById("editCed").value = a.estCed;
@@ -243,7 +243,7 @@ async function editarAlumno(e) {
     estDir: document.getElementById("editDir").value
   };
 
-  await fetch(API_ALUMNOS + "/" + ced, {
+  await fetch(API_ALUMOS + "/" + ced, {
     method: "PUT",
     headers: getHeaders(),
     body: JSON.stringify(body)
@@ -260,7 +260,7 @@ async function editarAlumno(e) {
 async function eliminarAlumno(ced) {
   if (!confirm("¿Eliminar alumno?")) return;
 
-  await fetch(API_ALUMNOS + "/" + ced, {
+  await fetch(API_ALUMOS + "/" + ced, {
     method: "DELETE",
     headers: getHeaders()
   });
@@ -302,8 +302,8 @@ function renderTablaCursos(data) {
       <tr>
         <td>${c.id}</td>
         <td>${c.nombre}</td>
-        <td>${c.alumno?.estCed || ""}</td>
-        <td>${c.alumno ? (c.alumno.estNom + " " + c.alumno.estApe) : ""}</td>
+        <td>${c.alumnoCed || ""}</td>
+        <td>${c.alumnoNombreCompleto || ""}</td>
 
         <td class="text-center admin-only">
           ${ rol === "ADMIN" ? `
@@ -327,9 +327,7 @@ async function crearCurso(e) {
 
   const body = {
     nombre: document.getElementById("curso-nombre").value,
-    alumno: {
-      estCed: document.getElementById("curso-alumno").value
-    }
+    alumnoCed: document.getElementById("curso-alumno").value
   };
 
   const res = await fetch(API_CURSOS, {
@@ -363,7 +361,7 @@ async function cargarEditarCurso(id) {
   document.getElementById("editNombre").value = c.nombre;
 
   await cargarAlumnosEnSelect("editAlumno");
-  document.getElementById("editAlumno").value = c.alumno.estCed;
+  document.getElementById("editAlumno").value = c.alumnoCed;
 
   modalEditar.show();
 }
@@ -378,9 +376,7 @@ async function editarCurso(e) {
 
   const body = {
     nombre: document.getElementById("editNombre").value,
-    alumno: {
-      estCed: document.getElementById("editAlumno").value
-    }
+    alumnoCed: document.getElementById("editAlumno").value
   };
 
   await fetch(API_CURSOS + "/" + id, {
