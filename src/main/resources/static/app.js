@@ -10,7 +10,6 @@ let modalCrear;
 let modalEditar;
 
 
-
 // ======================================================================
 // =============== HEADERS ===============================================
 // ======================================================================
@@ -57,11 +56,10 @@ async function login(e) {
       return;
     }
 
-    // guardar sesión
     localStorage.setItem("auth", auth);
     localStorage.setItem("user", username);
 
-    // detectar rol
+    // role by username
     if (username.toLowerCase() === "admin") {
       localStorage.setItem("role", "ADMIN");
       location.href = "index.html";
@@ -144,8 +142,8 @@ async function crearAlumno(e) {
   }
 
   modalCrear.hide();
-  listarAlumnos();
   form.reset();
+  listarAlumnos();
   mostrarAlerta("Alumno registrado", "success");
 }
 
@@ -166,8 +164,7 @@ async function listarAlumnos() {
   }
 
   const data = await res.json();
-
-  renderTabla(data);
+  renderTablaAlumnos(data);
 }
 
 
@@ -193,18 +190,16 @@ async function buscarAlumno(e) {
   }
 
   const a = await res.json();
-
-  renderTabla([a]);
+  renderTablaAlumnos([a]);
 }
 
 
 
 // ------ RENDER TABLA ------
-function renderTabla(data) {
+function renderTablaAlumnos(data) {
 
-  const tbody = document.getElementById("tbody-alumnos");
-
-  tbody.innerHTML = data.map(a => `
+  document.getElementById("tbody-alumnos").innerHTML =
+    data.map(a => `
      <tr>
       <td>${a.estCed}</td>
       <td>${a.estNom}</td>
@@ -212,8 +207,12 @@ function renderTabla(data) {
       <td>${a.estTel}</td>
       <td>${a.estDir}</td>
       <td class="text-center">
-        <button class="btn btn-sm btn-warning me-1" onclick="cargarEditarAlumno('${a.estCed}')">Editar</button>
-        <button class="btn btn-sm btn-danger" onclick="eliminarAlumno('${a.estCed}')">Eliminar</button>
+        <button class="btn btn-sm btn-warning me-1" onclick="cargarEditarAlumno('${a.estCed}')">
+            Editar
+        </button>
+        <button class="btn btn-sm btn-danger" onclick="eliminarAlumno('${a.estCed}')">
+            Eliminar
+        </button>
       </td>
     </tr>
   `).join("");
@@ -279,6 +278,165 @@ async function eliminarAlumno(ced) {
 
 
 // ======================================================================
+// ==================== CRUD CURSOS =====================================
+// ======================================================================
+
+// listar cursos
+async function listarCursos() {
+  const tbody = document.getElementById("cursos-table");
+  if (!tbody) return;
+
+  const res = await fetch(API_CURSOS, { headers: getHeaders() });
+
+  if (!res.ok) {
+    mostrarAlerta("Error cargando cursos", "danger");
+    return;
+  }
+
+  const data = await res.json();
+  renderTablaCursos(data);
+}
+
+
+
+// render cursos
+function renderTablaCursos(data) {
+
+  const rol = localStorage.getItem("role");
+
+  document.getElementById("cursos-table").innerHTML =
+    data.map(c => `
+      <tr>
+        <td>${c.curId}</td>
+        <td>${c.curNombre}</td>
+        <td>${c.alumno?.estCed || ""}</td>
+        <td>${c.alumno ? (c.alumno.estNom + " " + c.alumno.estApe) : ""}</td>
+
+        <td class="text-center admin-only">
+          ${ rol === "ADMIN" ? `
+            <button class="btn btn-sm btn-warning me-1" onclick="cargarEditarCurso(${c.curId})">
+                Editar
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="eliminarCurso(${c.curId})">
+                Eliminar
+            </button>
+          ` : ""}
+        </td>
+      </tr>
+    `).join("");
+}
+
+
+
+// crear curso
+async function crearCurso(e) {
+  e.preventDefault();
+
+  const body = {
+    curNombre: document.getElementById("curso-nombre").value,
+    estCed: document.getElementById("curso-alumno").value
+  };
+
+  const res = await fetch(API_CURSOS, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) {
+    mostrarAlerta("Error guardando curso", "danger");
+    return;
+  }
+
+  modalCrear.hide();
+  listarCursos();
+  mostrarAlerta("Curso guardado", "success");
+}
+
+
+
+// cargar curso en modal
+async function cargarEditarCurso(id) {
+
+  const res = await fetch(API_CURSOS + "/" + id, {
+    headers: getHeaders()
+  });
+
+  const c = await res.json();
+
+  document.getElementById("editId").value = c.curId;
+  document.getElementById("editNombre").value = c.curNombre;
+
+  await cargarAlumnosEnSelect("editAlumno");
+  document.getElementById("editAlumno").value = c.alumno.estCed;
+
+  modalEditar.show();
+}
+
+
+
+// editar curso
+async function editarCurso(e) {
+  e.preventDefault();
+
+  const id = document.getElementById("editId").value;
+
+  const body = {
+    curNombre: document.getElementById("editNombre").value,
+    estCed: document.getElementById("editAlumno").value
+  };
+
+  await fetch(API_CURSOS + "/" + id, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(body)
+  });
+
+  modalEditar.hide();
+  listarCursos();
+  mostrarAlerta("Curso actualizado", "success");
+}
+
+
+
+// eliminar curso
+async function eliminarCurso(id) {
+  if (!confirm("¿Eliminar curso?")) return;
+
+  await fetch(API_CURSOS + "/" + id, {
+    method: "DELETE",
+    headers: getHeaders()
+  });
+
+  listarCursos();
+}
+
+
+
+// ======================================================================
+// =============== SELECT ALUMNOS PARA CURSOS ============================
+// ======================================================================
+
+async function cargarAlumnosEnSelect(idSelect) {
+
+  const res = await fetch(API_ALUMNOS, { headers: getHeaders() });
+
+  if (!res.ok) return;
+
+  const data = await res.json();
+
+  const select = document.getElementById(idSelect);
+
+  select.innerHTML = data.map(a => `
+      <option value="${a.estCed}">
+        ${a.estNom} ${a.estApe}
+      </option>
+    `).join("");
+}
+
+
+
+// ======================================================================
 // ========================== AUTO INIT =================================
 // ======================================================================
 
@@ -290,16 +448,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (pagina === "login.html" || pagina === "") return;
 
   if (!rol) return logout();
-
-
-
-  // ========= SECRETARIA =========
-  if (rol === "SECRETARIA") {
-
-    // ocultar boton inicio
-    const btnInicio = document.getElementById("btn-inicio");
-    if (btnInicio) btnInicio.style.display = "none";
-  }
 
 
   // ========= NAVBAR =========
@@ -318,6 +466,24 @@ document.addEventListener("DOMContentLoaded", () => {
   // ========= ALUMNOS =========
   if (document.getElementById("tbody-alumnos")) {
     listarAlumnos();
+  }
+
+
+  // ========= CURSOS =========
+  if (document.getElementById("cursos-table")) {
+
+    // cargar alumnos en select para crear
+    cargarAlumnosEnSelect("curso-alumno");
+
+    // listar cursos
+    listarCursos();
+
+    // mostrar/ocultar botones según rol
+    if (rol !== "ADMIN") {
+      document.querySelectorAll(".admin-only").forEach(el => {
+        el.style.display = "none";
+      });
+    }
   }
 
 });
