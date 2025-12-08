@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.Customizer;
 
 @Configuration
 @RequiredArgsConstructor
@@ -25,39 +26,39 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable);
 
         http.authorizeHttpRequests(auth -> auth
-                // Recursos públicos (ajusta los nombres de archivos que tengas)
+                // Páginas y recursos públicos
                 .requestMatchers(
                         "/",
                         "/login.html",
                         "/registro.html",
-                        "/css/**",
-                        "/js/**",
-                        "/app.js",
-                        "/auth/register"
+                        "/index.html",
+                        "/alumnos.html",
+                        "/cursos.html",
+                        "/styles.css",
+                        "/app.js"
                 ).permitAll()
 
-                // ADMIN y SECRETARIA pueden acceder a alumnos
-                .requestMatchers("/api/alumnos/**")
-                .hasAnyRole("ADMIN", "SECRETARIA")
+                // Endpoints públicos de auth (si los usas)
+                .requestMatchers("/api/auth/**").permitAll()
 
-                // Solo ADMIN puede acceder a cursos
-                .requestMatchers("/api/cursos/**")
-                .hasRole("ADMIN")
+                // SECRETARIA y ADMIN pueden gestionar alumnos
+                .requestMatchers("/api/alumnos/**").hasAnyRole("ADMIN", "SECRETARIA")
 
-                // Todo lo demás requiere estar autenticado
+                // Solo ADMIN puede gestionar cursos
+                .requestMatchers("/api/cursos/**").hasRole("ADMIN")
+
+                // Cualquier otra cosa requiere estar autenticado
                 .anyRequest().authenticated()
         );
 
-        // Autenticación básica para empezar (frontend manda Authorization: Basic ...)
-        http.httpBasic();
-
-        http.authenticationProvider(daoAuthenticationProvider());
+        http.httpBasic(Customizer.withDefaults());
+        http.authenticationProvider(authenticationProvider());
 
         return http.build();
     }
 
     @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider() {
+    public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());

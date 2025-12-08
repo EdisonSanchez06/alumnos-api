@@ -1,280 +1,125 @@
-<!doctype html>
-<html lang="es">
+<!DOCTYPE html>
+<html>
 <head>
-    <meta charset="UTF-8" />
-    <title>Alumnos</title>
+    <meta charset="UTF-8">
+    <title>Gestión de Alumnos</title>
 
-    <!-- BOOTSTRAP -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 
-    <!-- ICONOS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
-    <style>
-        body {
-          min-height: 100vh;
-          font-family: system-ui, sans-serif;
-          background:
-              radial-gradient(circle at 15% 20%, rgba(52,95,144,.45), transparent 50%),
-              radial-gradient(circle at 85% 25%, rgba(31,59,87,.4), transparent 55%),
-              linear-gradient(135deg, #edf1f7, #e3e8ef);
-          background-attachment: fixed;
-          padding-bottom: 90px;
-        }
-
-        .navbar {
-          backdrop-filter: blur(10px);
-          background: rgba(255,255,255,.85) !important;
-          border-bottom: 1px solid rgba(0,0,0,.05);
-        }
-
-        .container-box {
-          background: white;
-          border-radius: 18px;
-          padding: 30px;
-          box-shadow: 0 25px 60px rgba(0,0,0,.06);
-          margin-top: 35px;
-        }
-
-        .title {
-          font-weight: 700;
-          font-size: 28px;
-          color: #0f172a;
-        }
-
-        .btn-main {
-          background: #4a8afe;
-          border: none;
-          font-weight: 600;
-          padding: 9px 18px;
-          border-radius: 12px;
-          transition: .2s;
-        }
-
-        .btn-main:hover {
-          background: #3a74d8;
-        }
-
-        input.form-control {
-          border-radius: 12px;
-          border: 2px solid transparent;
-          background: #f8fafc;
-          transition: .2s;
-        }
-
-        input.form-control:focus {
-          border-color: #4a8afe;
-          box-shadow: 0 0 0 2px rgba(74,138,254,.25);
-        }
-    </style>
-
+    <!-- jsPDF para exportar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
 
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h4>Menú</h4>
+    <a href="alumnos.html">Alumnos</a>
+    <a href="#" style="cursor:not-allowed;opacity:.5">Cursos (solo admin)</a>
+    <a onclick="logout()" style="cursor:pointer;color:red">Salir</a>
+</div>
+
 <!-- NAVBAR -->
-<nav class="navbar navbar-light shadow-sm">
-    <div class="container-fluid">
-
-    <span class="navbar-brand fw-bold fs-4 text-dark">
-      <i class="bi bi-mortarboard"></i> Sistema Académico
-    </span>
-
-        <div class="d-flex align-items-center">
-
-            <a href="index.html" id="btn-inicio" class="btn btn-secondary-soft btn-sm me-3">
-                <i class="bi bi-arrow-left"></i> Inicio
-            </a>
-
-            <span class="me-3 fw-semibold text-capitalize" id="usuario-actual"></span>
-
-            <button class="btn btn-danger btn-sm" onclick="logout()">
-                <i class="bi bi-box-arrow-right"></i>
-            </button>
-
-        </div>
-
-    </div>
+<nav class="navbar navbar-light bg-white px-4">
+    <h4 class="my-2">Gestión de Alumnos</h4>
 </nav>
 
-
-
 <!-- CONTENIDO -->
-<div class="container container-box">
+<div class="content">
 
     <div id="alerta"></div>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="title">Alumnos</h2>
+    <div class="card p-3 mb-4">
+        <h5>Crear Alumno</h5>
 
-        <!-- AHORA visible para ADMIN y SECRETARIA -->
-        <button class="btn-main" onclick="abrirModalNuevo()">
-            <i class="bi bi-person-plus"></i> Nuevo
-        </button>
+        <form onsubmit="crearAlumno(event)" class="row g-3">
+
+            <div class="col-md-3">
+                <input class="form-control" name="estCed" placeholder="Cédula" required>
+            </div>
+            <div class="col-md-3">
+                <input class="form-control" name="estNom" placeholder="Nombres" required>
+            </div>
+            <div class="col-md-3">
+                <input class="form-control" name="estApe" placeholder="Apellidos" required>
+            </div>
+            <div class="col-md-3">
+                <input class="form-control" name="estTel" placeholder="Teléfono">
+            </div>
+            <div class="col-md-12">
+                <input class="form-control" name="estDir" placeholder="Dirección">
+            </div>
+
+            <div class="col-md-12">
+                <button class="btn btn-success">Guardar</button>
+            </div>
+
+        </form>
     </div>
 
-
-    <!-- BUSCADOR -->
-    <form class="row g-2 mb-4" onsubmit="buscarAlumno(event)">
-        <div class="col-9 col-md-6">
-            <input id="buscarCed" class="form-control" placeholder="Buscar por cédula...">
+    <!-- LISTA -->
+    <div class="card p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="m-0">Lista de Alumnos</h5>
+            <input class="form-control search-input" onkeyup="filtrarTabla('tbodyAlumnos',this.value)" placeholder="Buscar...">
         </div>
-        <div class="col-3 col-md-2">
-            <button class="btn btn-dark w-100"><i class="bi bi-search"></i></button>
-        </div>
-    </form>
 
-
-    <!-- TABLA -->
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead>
+        <table class="table table-striped mt-3">
+            <thead class="table-dark">
             <tr>
                 <th>Cédula</th>
                 <th>Nombres</th>
                 <th>Apellidos</th>
-                <th>Teléfono</th>
-                <th>Dirección</th>
-                <th class="text-center">Acciones</th>
+                <th>Tel</th>
+                <th>Dir</th>
+                <th>Opciones</th>
             </tr>
             </thead>
-
-            <tbody id="tbody-alumnos"></tbody>
-
+            <tbody id="tbodyAlumnos"></tbody>
         </table>
+
+        <button class="btn btn-danger" onclick="exportarPDF('tbodyAlumnos','Lista de Alumnos')">
+            Exportar PDF
+        </button>
+    </div>
+
+    <!-- EDITAR -->
+    <div class="card p-3 mb-4">
+        <h5>Editar Alumno</h5>
+
+        <form onsubmit="actualizarAlumno(event)" class="row g-3">
+
+            <div class="col-md-3">
+                <input class="form-control" id="estCedE" placeholder="Cédula" disabled>
+            </div>
+            <div class="col-md-3">
+                <input class="form-control" id="estNomE" placeholder="Nombres">
+            </div>
+            <div class="col-md-3">
+                <input class="form-control" id="estApeE" placeholder="Apellidos">
+            </div>
+            <div class="col-md-3">
+                <input class="form-control" id="estTelE" placeholder="Teléfono">
+            </div>
+            <div class="col-md-12">
+                <input class="form-control" id="estDirE" placeholder="Dirección">
+            </div>
+
+            <div class="col-md-12">
+                <button class="btn btn-warning">Actualizar</button>
+            </div>
+
+        </form>
     </div>
 
 </div>
 
-
-
-<!-- ===================== MODAL CREAR ===================== -->
-
-<div class="modal fade" id="modalCrear" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-
-            <form id="formCrear" onsubmit="crearAlumno(event)">
-
-                <div class="modal-header">
-                    <h5 class="modal-title fw-semibold">
-                        <i class="bi bi-person-plus"></i> Nuevo alumno
-                    </h5>
-
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body">
-
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Cédula</label>
-                            <input name="estCed" required class="form-control">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Nombres</label>
-                            <input name="estNom" required class="form-control">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Apellidos</label>
-                            <input name="estApe" required class="form-control">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Dirección</label>
-                            <input name="estDir" required class="form-control">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Teléfono</label>
-                            <input name="estTel" required class="form-control">
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn-main w-100">
-                        <i class="bi bi-check-circle"></i> Guardar
-                    </button>
-                </div>
-
-            </form>
-
-        </div>
-    </div>
-</div>
-
-
-
-<!-- ===================== MODAL EDITAR ===================== -->
-
-<div class="modal fade" id="modalEditar" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-
-            <form onsubmit="editarAlumno(event)">
-
-                <div class="modal-header">
-                    <h5 class="modal-title fw-semibold">
-                        <i class="bi bi-pencil-square"></i> Editar alumno
-                    </h5>
-
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body">
-
-                    <div class="row g-3">
-
-                        <div class="col-md-4">
-                            <label class="form-label">Cédula</label>
-                            <input id="editCed" readonly class="form-control">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Nombres</label>
-                            <input id="editNom" class="form-control">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Apellidos</label>
-                            <input id="editApe" class="form-control">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Teléfono</label>
-                            <input id="editTel" class="form-control">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Dirección</label>
-                            <input id="editDir" class="form-control">
-                        </div>
-
-                    </div>
-
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn-main w-100">
-                        <i class="bi bi-check-circle"></i> Guardar Cambios
-                    </button>
-                </div>
-
-            </form>
-
-        </div>
-    </div>
-</div>
-
-
-
-<!-- JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="app.js"></script>
+<script>
+    listarAlumnos();
+</script>
 
 </body>
 </html>

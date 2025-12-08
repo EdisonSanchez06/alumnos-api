@@ -52,4 +52,11 @@ public class AlumnoController {
     public void eliminar(@PathVariable String ced) {
         service.eliminar(ced);
     }
+
+    // NUEVO: todos los alumnos que pertenecen a un curso
+    // GET /api/alumnos/curso/{cursoId}
+    @GetMapping("/curso/{cursoId}")
+    public List<Alumno> alumnosPorCurso(@PathVariable Long cursoId) {
+        return service.listarPorCurso(cursoId);
+    }
 }

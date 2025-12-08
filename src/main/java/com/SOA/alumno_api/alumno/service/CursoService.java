@@ -19,4 +19,7 @@ public interface CursoService {
     CursoResponseDTO obtener(Long id);
 
     void eliminar(Long id);
+
+    // NUEVO: asignar (o cambiar) el alumno de un curso
+    CursoResponseDTO asignarAlumno(Long cursoId, String alumnoCed);
 }

@@ -3,9 +3,7 @@ package com.soa.alumno_api.alumno.web;
 import com.soa.alumno_api.alumno.dto.CursoCreateDTO;
 import com.soa.alumno_api.alumno.dto.CursoResponseDTO;
 import com.soa.alumno_api.alumno.dto.CursoUpdateDTO;
-import com.soa.alumno_api.alumno.dto.*;
 import com.soa.alumno_api.alumno.service.CursoService;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -46,11 +44,21 @@ public class CursoController {
         return ResponseEntity.ok(cursoService.obtener(id));
     }
 
+    // Cursos de un alumno (ya lo tenías)
     @GetMapping("/alumno/{alumnoCed}")
     public ResponseEntity<List<CursoResponseDTO>> listarPorAlumno(
             @PathVariable String alumnoCed
     ) {
         return ResponseEntity.ok(cursoService.listarPorAlumno(alumnoCed));
+    }
+
+    // NUEVO: asignar alumno a un curso (o cambiarlo)
+    @PutMapping("/{id}/alumno/{ced}")
+    public ResponseEntity<CursoResponseDTO> asignarAlumno(
+            @PathVariable Long id,
+            @PathVariable String ced
+    ) {
+        return ResponseEntity.ok(cursoService.asignarAlumno(id, ced));
     }
 
     @DeleteMapping("/{id}")

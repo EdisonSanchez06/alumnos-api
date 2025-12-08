@@ -3,12 +3,10 @@ package com.soa.alumno_api.alumno.service;
 import com.soa.alumno_api.alumno.dto.CursoCreateDTO;
 import com.soa.alumno_api.alumno.dto.CursoResponseDTO;
 import com.soa.alumno_api.alumno.dto.CursoUpdateDTO;
-import com.soa.alumno_api.alumno.dto.*;
 import com.soa.alumno_api.alumno.entity.Alumno;
 import com.soa.alumno_api.alumno.entity.Curso;
 import com.soa.alumno_api.alumno.repo.AlumnoRepository;
 import com.soa.alumno_api.alumno.repo.CursoRepository;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -80,11 +78,26 @@ public class CursoServiceImpl implements CursoService {
         cursoRepository.deleteById(id);
     }
 
+    // NUEVO: asignar (o cambiar) el alumno de un curso existente
+    @Override
+    public CursoResponseDTO asignarAlumno(Long cursoId, String alumnoCed) {
+
+        Curso curso = cursoRepository.findById(cursoId)
+                .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
+
+        Alumno alumno = alumnoRepository.findById(alumnoCed)
+                .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
+
+        curso.setAlumno(alumno);
+
+        return mapToDto(cursoRepository.save(curso));
+    }
+
     private CursoResponseDTO mapToDto(Curso curso) {
         return CursoResponseDTO.builder()
                 .id(curso.getId())
                 .nombre(curso.getNombre())
-                .alumnoCed(curso.getAlumno().getEstCed())   // <- PARÉNTESIS CORREGIDO
+                .alumnoCed(curso.getAlumno().getEstCed())
                 .alumnoNombreCompleto(
                         curso.getAlumno().getEstNom() + " " + curso.getAlumno().getEstApe()
                 )

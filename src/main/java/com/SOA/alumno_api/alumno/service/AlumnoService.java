@@ -31,16 +31,18 @@ public class AlumnoService {
 
     // POST /api/alumnos
     public Alumno crear(AlumnoCreateDto dto) {
-        if (repo.existsById(dto.estCed())) {
-            throw new IllegalArgumentException("Ya existe un alumno con cédula " + dto.estCed());
+
+        if (repo.existsByEstCed(dto.estCed())) {
+            throw new IllegalArgumentException("Ya existe un alumno con cédula: " + dto.estCed());
         }
-        Alumno a = Alumno.builder()
-                .estCed(dto.estCed())
-                .estNom(dto.estNom())
-                .estApe(dto.estApe())
-                .estDir(dto.estDir())
-                .estTel(dto.estTel())
-                .build();
+
+        Alumno a = new Alumno();
+        a.setEstCed(dto.estCed());
+        a.setEstNom(dto.estNom());
+        a.setEstApe(dto.estApe());
+        a.setEstDir(dto.estDir());
+        a.setEstTel(dto.estTel());
+
         return repo.save(a);
     }
 
@@ -58,5 +60,11 @@ public class AlumnoService {
     public void eliminar(String ced) {
         Alumno a = porCedula(ced);
         repo.delete(a);
+    }
+
+    // NUEVO: todos los alumnos de un curso
+    // GET /api/alumnos/curso/{cursoId}
+    public List<Alumno> listarPorCurso(Long cursoId) {
+        return repo.findByCursoId(cursoId);
     }
 }
