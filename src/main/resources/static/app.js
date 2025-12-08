@@ -39,6 +39,7 @@ async function login(e) {
   const auth = "Basic " + btoa(username + ":" + password);
 
   try {
+    // Si el API responde ok, el user está autorizado
     const res = await fetch(API_ALUMNOS, {
       method: "GET",
       headers: {
@@ -52,9 +53,11 @@ async function login(e) {
       return;
     }
 
+    // Guardar sesión
     localStorage.setItem("auth", auth);
     localStorage.setItem("user", username);
 
+    // Rol basado en username
     if (username.toLowerCase() === "admin") {
       localStorage.setItem("role", "ADMIN");
       location.href = "index.html";
@@ -444,12 +447,37 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!rol) return logout();
 
 
-  // ========= NAVBAR =========
+  // ==================================================================
+  // =========== RESTRICCIONES PARA SECRETARIA ========================
+  // ==================================================================
+
+  // Si intenta entrar a otras páginas → redirigir a alumnos.html
+  if (rol === "SECRETARIA") {
+    if (pagina === "index.html" || pagina === "cursos.html") {
+      location.href = "alumnos.html";
+      return;
+    }
+  }
+
+  // Ocultar botón inicio en alumnos
+  if (rol === "SECRETARIA" && pagina === "alumnos.html") {
+    const btnInicio = document.getElementById("btn-inicio");
+    if (btnInicio) btnInicio.style.display = "none";
+  }
+
+
+  // ==================================================================
+  // ================ NAVBAR ==========================================
+  // ==================================================================
+
   const usuarioSpan = document.getElementById("usuario-actual");
   if (usuarioSpan) usuarioSpan.textContent = localStorage.getItem("user");
 
 
-  // ========= MODALES =========
+  // ==================================================================
+  // ================ MODALES =========================================
+  // ==================================================================
+
   const mc = document.getElementById("modalCrear");
   if (mc) modalCrear = new bootstrap.Modal(mc);
 
@@ -457,19 +485,26 @@ document.addEventListener("DOMContentLoaded", () => {
   if (me) modalEditar = new bootstrap.Modal(me);
 
 
-  // ========= ALUMNOS =========
+  // ==================================================================
+  // ================ ALUMNOS =========================================
+  // ==================================================================
+
   if (document.getElementById("tbody-alumnos")) {
     listarAlumnos();
   }
 
 
-  // ========= CURSOS =========
+  // ==================================================================
+  // ================ CURSOS ==========================================
+  // ==================================================================
+
   if (document.getElementById("cursos-table")) {
 
     cargarAlumnosEnSelect("curso-alumno");
 
     listarCursos();
 
+    // ocultar botones admin-only
     if (rol !== "ADMIN") {
       document.querySelectorAll(".admin-only").forEach(el =>
         el.style.display = "none"
