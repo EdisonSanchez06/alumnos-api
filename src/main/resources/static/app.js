@@ -104,6 +104,7 @@ function mostrarAlerta(msg, tipo = "primary") {
 // =============== CRUD ALUMNOS ==========================================
 // ======================================================================
 
+// abrir modal crear alumno
 function abrirModalNuevo() {
   modalCrear.show();
 }
@@ -148,7 +149,7 @@ async function listarAlumnos() {
   const tbody = document.getElementById("tbody-alumnos");
   if (!tbody) return;
 
-  const res = await fetch(API_ALUMOS, { headers: getHeaders() });
+  const res = await fetch(API_ALUMNOS, { headers: getHeaders() });
 
   if (res.status === 401) return logout();
 
@@ -216,7 +217,7 @@ function renderTablaAlumnos(data) {
 
 // ------ CARGAR EDITAR ------
 async function cargarEditarAlumno(ced) {
-  const res = await fetch(API_ALUMOS + "/" + ced, { headers: getHeaders() });
+  const res = await fetch(API_ALUMNOS + "/" + ced, { headers: getHeaders() });
   const a = await res.json();
 
   document.getElementById("editCed").value = a.estCed;
@@ -243,7 +244,7 @@ async function editarAlumno(e) {
     estDir: document.getElementById("editDir").value
   };
 
-  await fetch(API_ALUMOS + "/" + ced, {
+  await fetch(API_ALUMNOS + "/" + ced, {
     method: "PUT",
     headers: getHeaders(),
     body: JSON.stringify(body)
@@ -260,7 +261,7 @@ async function editarAlumno(e) {
 async function eliminarAlumno(ced) {
   if (!confirm("¿Eliminar alumno?")) return;
 
-  await fetch(API_ALUMOS + "/" + ced, {
+  await fetch(API_ALUMNOS + "/" + ced, {
     method: "DELETE",
     headers: getHeaders()
   });
