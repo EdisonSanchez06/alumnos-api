@@ -23,7 +23,6 @@ let cursosFilters = { nombre: "", alumnoCed: "" };
 // ========================= UTILIDADES BASICAS =========================
 // ======================================================================
 
-// Headers con auth
 function getHeaders() {
   const token = localStorage.getItem("auth");
   const headers = { "Content-Type": "application/json" };
@@ -74,6 +73,7 @@ async function confirmDialog(title = "¿Seguro?", text = "Esta acción no se pue
 // ========================= AUTH / ROLES ===============================
 // ======================================================================
 
+// Login usando basic auth real
 async function login(e) {
   e.preventDefault();
 
@@ -88,33 +88,39 @@ async function login(e) {
   const basic = "Basic " + btoa(user + ":" + pass);
 
   try {
-    const resp = await fetch(API_BASE + "/auth/login", {
-      method: "GET",
+    // Validamos credenciales llamando a endpoint real
+    const resp = await fetch(API_ALUMNOS, {
       headers: {
-        Authorization: basic,
+        Authorization: basic
       },
     });
 
-    if (!resp.ok) throw new Error("Credenciales inválidas");
+    if (!resp.ok) {
+      throw new Error("Credenciales inválidas");
+    }
 
-    const data = await resp.json();
-
+    // Guardamos token
     localStorage.setItem("auth", basic);
-    localStorage.setItem("username", data.user);
-    localStorage.setItem("role", data.role);
+    localStorage.setItem("username", user.toUpperCase());
 
-    toast("Bienvenido " + data.user, "success");
+    // Rol provisional basado en nombre
+    let role = "SECRETARIA";
+    if (user.toLowerCase() === "admin") role = "ADMIN";
 
-    if (data.role === "ADMIN")
+    localStorage.setItem("role", role);
+
+    toast("Bienvenido " + user, "success");
+
+    // Redirección por rol
+    if (role === "ADMIN")
       location.href = "dashboard.html";
     else
       location.href = "alumnos.html";
 
   } catch (err) {
-    toast(err.message || "Error de login", "error");
+    toast(err.message || "Error en login", "error");
   }
 }
-
 
 function logout() {
   localStorage.clear();
@@ -180,7 +186,6 @@ function paginate(array, page, size) {
 function applyAlumnosFilters() {
   let result = [...alumnosData];
 
-  // filtros avanzados
   if (alumnosFilters.cedula) {
     result = result.filter((a) => (a.estCed || "").toLowerCase().includes(alumnosFilters.cedula.toLowerCase()));
   }
@@ -191,7 +196,6 @@ function applyAlumnosFilters() {
     result = result.filter((a) => (a.estApe || "").toLowerCase().includes(alumnosFilters.apellido.toLowerCase()));
   }
 
-  // buscador global
   if (alumnosSearch) {
     const q = alumnosSearch.toLowerCase();
     result = result.filter((a) =>
@@ -345,7 +349,7 @@ async function crearAlumno(e) {
   const data = {
     estCed: form.estCed.value.trim(),
     estNom: form.estNom.value.trim(),
-    estApe: form.estApe.value.trim(),
+    estApe: form.estAape?.value?.trim() ?? form.estApe.value.trim(),
     estTel: form.estTel.value.trim(),
     estDir: form.estDir.value.trim(),
   };

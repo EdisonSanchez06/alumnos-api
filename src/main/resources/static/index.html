@@ -1,25 +1,35 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <title>Inicio</title>
+    <title>Inicio – Sistema Académico</title>
 
-    <!-- BOOTSTRAP 5 CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- BOOTSTRAP 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- BOOTSTRAP ICONS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    <!-- CUSTOM CSS -->
+    <link rel="stylesheet" href="css/style.css">
 
     <style>
         body {
-          background: #f8f9fa;
+            background: #f8f9fa;
         }
-
+        .card-link {
+            transition: .3s;
+        }
         .card-link:hover {
-          transform: translateY(-3px);
-          transition: 0.3s;
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,.08);
         }
     </style>
 </head>
 
-<body>
+<body onload="loadTheme()">
 
 <!-- ================= CHECK LOGIN ================= -->
 <script>
@@ -29,43 +39,59 @@
 </script>
 
 <!-- ================= NAVBAR ================= -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4 shadow-sm">
     <div class="container-fluid">
 
-        <a class="navbar-brand" href="#">SOA</a>
+        <a class="navbar-brand fw-bold" href="index.html">
+            <i class="bi bi-mortarboard-fill me-1"></i> SOA
+        </a>
+
+        <span class="navbar-text me-auto text-light small">
+            Bienvenido: <b id="userNameNav"></b>
+        </span>
 
         <div class="d-flex">
-            <span class="navbar-text me-3 text-light" id="usuario-actual"></span>
-            <button class="btn btn-outline-light btn-sm" onclick="logout()">Salir</button>
+
+            <button class="btn btn-light btn-sm me-2" onclick="toggleTheme()">
+                <i class="bi bi-moon-stars"></i>
+            </button>
+
+            <button class="btn btn-danger btn-sm" onclick="logout()">
+                <i class="bi bi-box-arrow-right me-1"></i> Salir
+            </button>
+
         </div>
 
     </div>
 </nav>
 
 
+<!-- ================= CONTENIDO ================= -->
 <div class="container">
 
-    <h2 class="mb-4">Bienvenido 👋</h2>
+    <h2 class="mb-4 fw-semibold">
+        Bienvenido 👋
+    </h2>
 
-    <p class="lead mb-4">
-        Selecciona una opción:
+    <p class="lead text-muted mb-4">
+        Selecciona una opción para comenzar:
     </p>
 
     <div class="row g-4">
 
         <!-- ================= CARD ALUMNOS ================= -->
         <div class="col-md-6">
-            <a href="alumnos.html" class="text-decoration-none">
-                <div class="card card-link">
-                    <div class="card-body text-center">
+            <a href="alumnos.html" class="text-decoration-none text-dark">
+                <div class="card card-link shadow-sm">
+                    <div class="card-body text-center py-4">
 
-                        <h3 class="mb-2 text-primary">
-                            <i class="bi bi-people"></i>
+                        <h3 class="mb-2 text-primary fw-bold">
+                            <i class="bi bi-people-fill me-2"></i>
                             Alumnos
                         </h3>
 
                         <p class="text-muted mb-0">
-                            CRUD completo de alumnos
+                            Gestiona estudiantes del sistema
                         </p>
 
                     </div>
@@ -76,17 +102,17 @@
 
         <!-- ================= CARD CURSOS ================= -->
         <div class="col-md-6">
-            <a href="cursos.html" class="text-decoration-none">
-                <div class="card card-link">
-                    <div class="card-body text-center">
+            <a href="cursos.html" class="text-decoration-none text-dark">
+                <div class="card card-link shadow-sm">
+                    <div class="card-body text-center py-4">
 
-                        <h3 class="mb-2 text-success">
-                            <i class="bi bi-journal-bookmark-fill"></i>
+                        <h3 class="mb-2 text-success fw-bold">
+                            <i class="bi bi-journal-code me-2"></i>
                             Cursos
                         </h3>
 
                         <p class="text-muted mb-0">
-                            CRUD de cursos por alumno
+                            Gestiona cursos por alumno
                         </p>
 
                     </div>
@@ -99,19 +125,25 @@
 </div>
 
 
-<!-- ================= JS ================= -->
+<!-- ================= FOOTER ================= -->
+<footer class="text-center mt-5 mb-3 text-muted small">
+    © 2025 – Sistema Académico
+</footer>
+
+
+<!-- ================= SCRIPTS ================= -->
+
+<!-- Bootstrap -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- bootstrap icons -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+<!-- APP -->
+<script src="js/app.js"></script>
 
 <script>
-    // Mostrar usuario logeado
-    const user = localStorage.getItem("user") || "Invitado";
-    document.getElementById("usuario-actual").innerHTML = user;
+    // Mostrar nombre usuario
+    document.getElementById("userNameNav").textContent =
+        localStorage.getItem("username") || "";
 </script>
-
-<script src="js/app.js"></script>
 
 </body>
 </html>
