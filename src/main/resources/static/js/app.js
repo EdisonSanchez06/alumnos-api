@@ -6,7 +6,7 @@ const API_BASE = "https://alumnos-api-e65o.onrender.com";
 const API_ALUMNOS = API_BASE + "/api/alumnos";
 const API_CURSOS = API_BASE + "/api/cursos";
 
-// Estados globales para paginación y filtros
+// Estados globales
 let alumnosData = [];
 let alumnosPage = 1;
 let alumnosPageSize = 5;
@@ -19,6 +19,8 @@ let cursosPageSize = 5;
 let cursosSearch = "";
 let cursosFilters = { nombre: "", alumnoCed: "" };
 
+let alumnosParaAutocomplete = []; // para autocompletar
+
 // ======================================================================
 // ========================= UTILIDADES BASICAS =========================
 // ======================================================================
@@ -30,7 +32,6 @@ function getHeaders() {
   return headers;
 }
 
-// Tema oscuro
 function loadTheme() {
   const stored = localStorage.getItem("theme") || "light";
   document.documentElement.setAttribute("data-theme", stored);
@@ -43,7 +44,6 @@ function toggleTheme() {
   localStorage.setItem("theme", next);
 }
 
-// Toast moderno
 function toast(message, icon = "info") {
   Swal.fire({
     toast: true,
@@ -55,16 +55,15 @@ function toast(message, icon = "info") {
   });
 }
 
-// Confirmación
-async function confirmDialog(title = "¿Seguro?", text = "Esta acción no se puede deshacer") {
+async function confirmDialog(title, text) {
   const result = await Swal.fire({
     title,
     text,
     icon: "warning",
     showCancelButton: true,
     confirmButtonColor: "#d33",
-    cancelButtonText: "Cancelar",
     confirmButtonText: "Sí",
+    cancelButtonText: "Cancelar",
   });
   return result.isConfirmed;
 }
@@ -73,40 +72,28 @@ async function confirmDialog(title = "¿Seguro?", text = "Esta acción no se pue
 // ========================= AUTH / ROLES ===============================
 // ======================================================================
 
-// Login real usando Basic Auth
 async function login(e) {
   e.preventDefault();
 
   const user = e.target.usuario.value.trim();
   const pass = e.target.clave.value.trim();
 
-  if (!user || !pass) {
-    toast("Debe ingresar usuario y contraseña", "warning");
-    return;
-  }
+  if (!user || !pass) return toast("Debe ingresar usuario y contraseña", "warning");
 
   const basic = "Basic " + btoa(user + ":" + pass);
 
   try {
-    const resp = await fetch(API_ALUMNOS, {
-      headers: { Authorization: basic }
-    });
-
+    const resp = await fetch(API_ALUMNOS, { headers: { Authorization: basic } });
     if (!resp.ok) throw new Error("Usuario o contraseña incorrectos");
 
     localStorage.setItem("auth", basic);
     localStorage.setItem("username", user.toUpperCase());
 
-    // Rol determinado por nombre del usuario
-    let role = "SECRETARIA";
-    if (user.toLowerCase() === "admin") role = "ADMIN";
-
+    let role = user.toLowerCase() === "admin" ? "ADMIN" : "SECRETARIA";
     localStorage.setItem("role", role);
 
     toast(`Bienvenido ${user}`, "success");
-
-    if (role === "ADMIN") location.href = "dashboard.html";
-    else location.href = "alumnos.html";
+    location.href = role === "ADMIN" ? "dashboard.html" : "alumnos.html";
 
   } catch (err) {
     toast(err.message, "error");
@@ -129,33 +116,33 @@ function ensureAuth() {
 function ensureAdmin() {
   ensureAuth();
   if (getRole() !== "ADMIN") {
-    toast("Solo el administrador puede acceder aquí", "error");
-    setTimeout(() => (location.href = "alumnos.html"), 1500);
+    toast("Solo admins pueden acceder aquí", "error");
+    setTimeout(() => location.href = "alumnos.html", 1500);
   }
 }
 
 // ======================================================================
-// ========================= VALIDACIÓN FORMULARIOS =====================
+// ========================= VALIDACIÓN ================================
 // ======================================================================
 
 function attachLiveValidation(form) {
   const inputs = form.querySelectorAll("input[required], textarea[required]");
-  inputs.forEach((input) => {
-    input.addEventListener("input", () => {
-      if (!input.value.trim()) {
-        input.classList.add("is-invalid");
-        input.classList.remove("is-valid");
+  inputs.forEach(i => {
+    i.addEventListener("input", () => {
+      if (!i.value.trim()) {
+        i.classList.add("is-invalid");
+        i.classList.remove("is-valid");
       } else {
-        input.classList.add("is-valid");
-        input.classList.remove("is-invalid");
+        i.classList.add("is-valid");
+        i.classList.remove("is-invalid");
       }
     });
   });
 }
 
 function clearValidation(form) {
-  const inputs = form.querySelectorAll("input, textarea");
-  inputs.forEach((i) => i.classList.remove("is-valid", "is-invalid"));
+  form.querySelectorAll("input, textarea")
+    .forEach(i => i.classList.remove("is-valid", "is-invalid"));
 }
 
 // ======================================================================
@@ -171,7 +158,7 @@ function applyAlumnosFilters() {
   let result = [...alumnosData];
 
   if (alumnosFilters.cedula)
-    result = result.filter(a => a.estCed.toLowerCase().includes(alumnosFilters.cedula.toLowerCase()));
+    result = result.filter(a => a.estCed.includes(alumnosFilters.cedula));
 
   if (alumnosFilters.nombre)
     result = result.filter(a => a.estNom.toLowerCase().includes(alumnosFilters.nombre.toLowerCase()));
@@ -196,7 +183,7 @@ function applyCursosFilters() {
     result = result.filter(c => c.nombre.toLowerCase().includes(cursosFilters.nombre.toLowerCase()));
 
   if (cursosFilters.alumnoCed)
-    result = result.filter(c => c.alumnoCed.toLowerCase().includes(cursosFilters.alumnoCed.toLowerCase()));
+    result = result.filter(c => c.alumnoCed.includes(cursosFilters.alumnoCed));
 
   if (cursosSearch) {
     const q = cursosSearch.toLowerCase();
@@ -212,21 +199,17 @@ function applyCursosFilters() {
 // ========================= CRUD ALUMNOS ===============================
 // ======================================================================
 
-// Cargar lista
 async function fetchAlumnos() {
   try {
     const resp = await fetch(API_ALUMNOS, { headers: getHeaders() });
-    if (!resp.ok) throw new Error("Error al cargar alumnos");
-
     alumnosData = await resp.json();
     alumnosPage = 1;
     renderAlumnosTable();
-  } catch (e) {
-    toast(e.message, "error");
+  } catch {
+    toast("Error al cargar alumnos", "error");
   }
 }
 
-// Render tabla
 function renderAlumnosTable() {
   const tbody = document.getElementById("tbodyAlumnos");
   if (!tbody) return;
@@ -234,6 +217,7 @@ function renderAlumnosTable() {
   const filtered = applyAlumnosFilters();
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / alumnosPageSize));
+
   if (alumnosPage > totalPages) alumnosPage = totalPages;
 
   const items = paginate(filtered, alumnosPage, alumnosPageSize);
@@ -245,19 +229,15 @@ function renderAlumnosTable() {
       <td>${a.estApe}</td>
       <td>${a.estTel || ""}</td>
       <td>${a.estDir || ""}</td>
-      <td>
+      <td class="text-center">
         <button class="btn btn-warning btn-sm me-1" onclick="abrirModalEditarAlumno('${a.estCed}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="eliminarAlumno('${a.estCed}')">Eliminar</button>
       </td>
     </tr>
   `).join("");
 
-  const info = document.getElementById("alumnosPaginationInfo");
-  if (info) {
-    const start = (alumnosPage - 1) * alumnosPageSize + 1;
-    const end = Math.min(alumnosPage * alumnosPageSize, total);
-    info.textContent = total ? `Mostrando ${start}-${end} de ${total}` : "Sin resultados";
-  }
+  document.getElementById("alumnosPaginationInfo").textContent =
+    total ? `Mostrando ${items.length} de ${total}` : "Sin resultados";
 
   document.getElementById("alumnosPrev").disabled = alumnosPage <= 1;
   document.getElementById("alumnosNext").disabled = alumnosPage >= totalPages;
@@ -278,7 +258,6 @@ function alumnosCambioFiltros() {
   alumnosFilters.cedula = document.getElementById("filterCedula").value.trim();
   alumnosFilters.nombre = document.getElementById("filterNombre").value.trim();
   alumnosFilters.apellido = document.getElementById("filterApellido").value.trim();
-
   alumnosPage = 1;
   renderAlumnosTable();
 }
@@ -314,7 +293,6 @@ async function crearAlumno(e) {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-
     toast("Alumno creado", "success");
     bootstrap.Modal.getInstance(document.getElementById("modalCrearAlumno")).hide();
     fetchAlumnos();
@@ -392,7 +370,7 @@ async function eliminarAlumno(ced) {
 }
 
 // ======================================================================
-// ========================= CRUD CURSOS ===============================
+// ========================= CRUD CURSOS ================================
 // ======================================================================
 
 async function fetchCursos() {
@@ -412,20 +390,19 @@ function renderCursosTable() {
 
   const filtered = applyCursosFilters();
   const total = filtered.length;
-  const totalPages = Math.ceil(total / cursosPageSize);
+  const totalPages = Math.max(1, Math.ceil(total / cursosPageSize));
 
   if (cursosPage > totalPages) cursosPage = totalPages;
-
   const items = paginate(filtered, cursosPage, cursosPageSize);
 
   tbody.innerHTML = items
     .map(
-      (c) => `
+      c => `
     <tr>
       <td>${c.id}</td>
       <td>${c.nombre}</td>
       <td>${c.alumnoCed} - ${c.alumnoNombreCompleto}</td>
-      <td>
+      <td class="text-center">
         <button class="btn btn-warning btn-sm me-1" onclick="abrirModalEditarCurso(${c.id})">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="eliminarCurso(${c.id})">Eliminar</button>
       </td>
@@ -440,23 +417,44 @@ function renderCursosTable() {
   document.getElementById("cursosNext").disabled = cursosPage >= totalPages;
 }
 
-function cursosCambioPagina(n) {
-  cursosPage += n;
-  renderCursosTable();
+// ====== AUTOCOMPLETE: cargar alumnos ======
+
+async function cargarCedulas() {
+  try {
+    const resp = await fetch(API_ALUMNOS, { headers: getHeaders() });
+    alumnosParaAutocomplete = await resp.json();
+  } catch {
+    toast("No se pudieron cargar cédulas", "error");
+  }
 }
 
-function cursosCambioSearch(input) {
-  cursosSearch = input.value.trim();
-  cursosPage = 1;
-  renderCursosTable();
-}
+// Autocomplete PRO
+function autocompletarCedula(inputId, listId) {
+  const input = document.getElementById(inputId);
+  const list = document.getElementById(listId);
 
-function cursosCambioFiltros() {
-  cursosFilters.nombre = document.getElementById("filterCursoNombre").value.trim();
-  cursosFilters.alumnoCed = document.getElementById("filterCursoAlumnoCed").value.trim();
+  input.addEventListener("input", () => {
+    const val = input.value.trim().toLowerCase();
+    if (!val) {
+      list.innerHTML = "";
+      return;
+    }
 
-  cursosPage = 1;
-  renderCursosTable();
+    const filtrados = alumnosParaAutocomplete
+      .filter(a => a.estCed.startsWith(val))
+      .slice(0, 8);
+
+    list.innerHTML = filtrados
+      .map(a => `<div class="ac-item" data-value="${a.estCed}">${a.estCed} — ${a.estNom} ${a.estApe}</div>`)
+      .join("");
+
+    document.querySelectorAll(".ac-item").forEach(el => {
+      el.onclick = () => {
+        input.value = el.dataset.value;
+        list.innerHTML = "";
+      };
+    });
+  });
 }
 
 // Crear curso
@@ -477,6 +475,9 @@ async function crearCurso(e) {
     nombre: f.nombre.value.trim(),
     alumnoCed: f.alumnoCed.value.trim(),
   };
+
+  if (!data.nombre || !data.alumnoCed)
+    return toast("Todos los campos son obligatorios", "warning");
 
   try {
     await fetch(API_CURSOS, {
@@ -539,6 +540,7 @@ async function actualizarCurso(e) {
   }
 }
 
+// Eliminar curso
 async function eliminarCurso(id) {
   if (!(await confirmDialog("Eliminar curso", `¿Eliminar curso ${id}?`))) return;
 
@@ -564,41 +566,65 @@ async function initDashboard() {
   ensureAdmin();
 
   try {
-    const [alResp, cuResp] = await Promise.all([
+    const [respAl, respCu] = await Promise.all([
       fetch(API_ALUMNOS, { headers: getHeaders() }),
       fetch(API_CURSOS, { headers: getHeaders() }),
     ]);
 
-    const alumnos = await alResp.json();
-    const cursos = await cuResp.json();
+    const alumnos = await respAl.json();
+    const cursos = await respCu.json();
 
     document.getElementById("totalAlumnos").textContent = alumnos.length;
     document.getElementById("totalCursos").textContent = cursos.length;
-    document.getElementById("userName").textContent =
-      localStorage.getItem("username");
+    document.getElementById("userName").textContent = localStorage.getItem("username");
 
-    // Conteo para gráfica
-    const counts = {};
+    // Últimos alumnos
+    const ultimos = alumnos.slice(-5);
+    const tbody = document.getElementById("tbodyUltimos");
+
+    if (tbody) {
+      tbody.innerHTML = ultimos.map(a => {
+        const curso = cursos.find(c => c.alumnoCed === a.estCed);
+        return `
+          <tr>
+            <td>${a.estCed}</td>
+            <td>${a.estNom} ${a.estApe}</td>
+            <td>${curso ? curso.nombre : "<span class='text-muted'>Sin curso</span>"}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // Cursos por alumno → TOP 10
+    const conteo = {};
     cursos.forEach(c => {
-      const name = c.alumnoNombreCompleto || c.alumnoCed;
-      counts[name] = (counts[name] || 0) + 1;
+      const nombre = c.alumnoNombreCompleto || c.alumnoCed;
+      conteo[nombre] = (conteo[nombre] || 0) + 1;
     });
 
-    const labels = Object.keys(counts);
-    const data = Object.values(counts);
+    let lista = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
-    new Chart(document.getElementById("chartCursosPorAlumno"), {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [{
-          label: "Cursos por alumno",
-          data
-        }]
-      }
-    });
-  } catch {
-    toast("Error al cargar dashboard", "error");
+    const labels = lista.map(x => x[0]);
+    const data = lista.map(x => x[1]);
+
+    const ctx = document.getElementById("chartCursosPorAlumno");
+    if (ctx) {
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label: "Cursos por alumno",
+            data,
+            backgroundColor: "rgba(0, 123, 255, 0.6)",
+          }],
+        },
+        options: { responsive: true }
+      });
+    }
+
+  } catch (e) {
+    toast("Error cargando dashboard", "error");
   }
 }
 
@@ -612,8 +638,10 @@ function initAlumnosPage() {
   fetchAlumnos();
 }
 
-function initCursosPage() {
+async function initCursosPage() {
   loadTheme();
   ensureAdmin();
+  await cargarCedulas();          // Cargar cedulas para autocompletar
+  autocompletarCedula("alumnoCed", "listaCedulas");
   fetchCursos();
 }
