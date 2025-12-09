@@ -1,68 +1,82 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Dashboard</title>
 
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- CSS propio -->
     <link rel="stylesheet" href="style.css">
 </head>
+<body>
 
-<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand text-primary" href="#">Menú</a>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-    <h4>Menú</h4>
-    <a href="alumnos.html">Alumnos</a>
-    <a href="cursos.html">Cursos</a>
-    <a href="dashboard.html">Dashboard</a>
-    <a onclick="logout()" style="cursor:pointer;color:red">Salir</a>
-</div>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-<!-- NAVBAR -->
-<nav class="navbar navbar-light bg-white px-4">
-    <h4 class="my-2">Panel de Control</h4>
+        <div class="collapse navbar-collapse" id="navMain">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="alumnos.html">Alumnos</a></li>
+                <li class="nav-item"><a class="nav-link" href="cursos.html">Cursos</a></li>
+                <li class="nav-item"><a class="nav-link active" href="dashboard.html">Dashboard</a></li>
+            </ul>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm btn-theme-toggle" onclick="toggleTheme()">
+                    🌙 Tema
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="logout()">Salir</button>
+            </div>
+        </div>
+    </div>
 </nav>
 
-<!-- CONTENIDO -->
-<div class="content">
+<div class="main-container">
 
-    <!-- TOAST CONTAINER -->
-    <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
-
-    <div class="row g-4 mb-4">
+    <div class="row g-3 mb-4">
         <div class="col-md-4">
-            <div class="card p-3 text-center">
-                <h6>Total de Alumnos</h6>
+            <div class="card p-3 dashboard-card">
+                <span>Total alumnos</span>
                 <h3 id="totalAlumnos">0</h3>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card p-3 text-center">
-                <h6>Total de Cursos</h6>
+            <div class="card p-3 dashboard-card">
+                <span>Total cursos</span>
                 <h3 id="totalCursos">0</h3>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card p-3 text-center">
-                <h6>Usuario</h6>
-                <h3 id="userName">Admin</h3>
+            <div class="card p-3 dashboard-card">
+                <span>Usuario</span>
+                <h3 id="userName">admin</h3>
             </div>
         </div>
     </div>
 
     <div class="card p-3">
-        <h5>Cursos por Alumno</h5>
+        <h5 class="mb-3">Cursos por alumno</h5>
         <canvas id="chartCursosPorAlumno" height="120"></canvas>
     </div>
 
 </div>
 
+<!-- JS Bootstrap + app -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="app.js"></script>
 <script>
-    cargarDashboard();
+    document.addEventListener("DOMContentLoaded", initDashboard);
 </script>
 
 </body>

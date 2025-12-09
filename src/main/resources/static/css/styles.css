@@ -1,0 +1,165 @@
+/* ====== BASE GENERAL ====== */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f5f7fb;
+  color: #1f2933;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* Contenedor principal de las páginas */
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* ====== NAVBAR ====== */
+
+.navbar {
+  margin-bottom: 1rem;
+}
+
+.navbar-brand {
+  font-weight: 700;
+}
+
+.nav-link {
+  font-weight: 500;
+}
+
+/* ====== CARDS / TABLAS ====== */
+
+.card {
+  border-radius: 14px;
+  border: none;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.08);
+}
+
+.table {
+  margin-bottom: 0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.table thead.table-dark th {
+  background: #111827;
+}
+
+/* ====== BUSCADOR Y FILTROS ====== */
+
+.search-input {
+  max-width: 260px;
+}
+
+.filters-box {
+  border-radius: 10px;
+  background: #f9fafb;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+/* ====== PAGINACIÓN ====== */
+
+.pagination-info {
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+/* ====== FORM VALIDATION VISUAL ====== */
+
+.form-control.is-valid {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 0.15rem rgba(34, 197, 94, 0.25);
+}
+
+.form-control.is-invalid {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 0.15rem rgba(239, 68, 68, 0.25);
+}
+
+/* ====== DARK MODE (usa data-theme="dark" en <html>) ====== */
+
+html[data-theme="dark"] body {
+  background: #0b1120;
+  color: #e5e7eb;
+}
+
+html[data-theme="dark"] .navbar {
+  background: #020617 !important;
+}
+
+html[data-theme="dark"] .navbar .navbar-brand,
+html[data-theme="dark"] .navbar .nav-link {
+  color: #e5e7eb !important;
+}
+
+html[data-theme="dark"] .card {
+  background: #020617;
+  color: #e5e7eb;
+  box-shadow: 0 5px 20px rgba(15, 23, 42, 0.7);
+}
+
+html[data-theme="dark"] .table {
+  background: #020617;
+  color: #e5e7eb;
+}
+
+html[data-theme="dark"] .table tbody tr:hover {
+  background: #020617;
+}
+
+html[data-theme="dark"] .filters-box {
+  background: #020617;
+  border-color: #1f2937;
+}
+
+html[data-theme="dark"] .form-control,
+html[data-theme="dark"] .form-select {
+  background: #020617;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+html[data-theme="dark"] .form-control::placeholder {
+  color: #9ca3af;
+}
+
+/* Botón de dark mode */
+
+.btn-theme-toggle {
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ====== DASHBOARD ====== */
+
+.dashboard-card {
+  text-align: center;
+}
+
+.dashboard-card h3 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.dashboard-card span {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* Ajustes responsivos pequeños */
+
+@media (max-width: 768px) {
+  .main-container {
+    padding: 8px;
+  }
+}
