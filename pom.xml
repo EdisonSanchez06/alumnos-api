@@ -12,7 +12,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.SOA</groupId>
+    <groupId>com.soa</groupId>
     <artifactId>alumnos-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>alumnos-api</name>
@@ -80,10 +80,7 @@
         -->
 
         <!-- ✔ Test (opcional) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
+
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
