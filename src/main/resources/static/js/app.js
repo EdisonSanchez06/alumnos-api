@@ -6,7 +6,7 @@ const API_BASE = "https://alumnos-api-e65o.onrender.com";
 const API_ALUMNOS = API_BASE + "/api/alumnos";
 const API_CURSOS = API_BASE + "/api/cursos";
 
-// Estados para tablas (paginación / filtros)
+// Estados globales para paginación y filtros
 let alumnosData = [];
 let alumnosPage = 1;
 let alumnosPageSize = 5;
@@ -30,7 +30,7 @@ function getHeaders() {
   return headers;
 }
 
-// Dark mode
+// Tema oscuro
 function loadTheme() {
   const stored = localStorage.getItem("theme") || "light";
   document.documentElement.setAttribute("data-theme", stored);
@@ -43,28 +43,28 @@ function toggleTheme() {
   localStorage.setItem("theme", next);
 }
 
-// Toast bonito
+// Toast moderno
 function toast(message, icon = "info") {
   Swal.fire({
     toast: true,
     icon,
     title: message,
-    timer: 2500,
-    position: "top-end",
+    timer: 2000,
     showConfirmButton: false,
+    position: "top-end",
   });
 }
 
-// Confirmación bonita
+// Confirmación
 async function confirmDialog(title = "¿Seguro?", text = "Esta acción no se puede deshacer") {
   const result = await Swal.fire({
     title,
     text,
     icon: "warning",
     showCancelButton: true,
-    confirmButtonText: "Sí",
-    cancelButtonText: "Cancelar",
     confirmButtonColor: "#d33",
+    cancelButtonText: "Cancelar",
+    confirmButtonText: "Sí",
   });
   return result.isConfirmed;
 }
@@ -73,7 +73,7 @@ async function confirmDialog(title = "¿Seguro?", text = "Esta acción no se pue
 // ========================= AUTH / ROLES ===============================
 // ======================================================================
 
-// Login usando basic auth real
+// Login real usando Basic Auth
 async function login(e) {
   e.preventDefault();
 
@@ -81,44 +81,35 @@ async function login(e) {
   const pass = e.target.clave.value.trim();
 
   if (!user || !pass) {
-    toast("Usuario y contraseña son obligatorios", "warning");
+    toast("Debe ingresar usuario y contraseña", "warning");
     return;
   }
 
   const basic = "Basic " + btoa(user + ":" + pass);
 
   try {
-    // Validamos credenciales llamando a endpoint real
     const resp = await fetch(API_ALUMNOS, {
-      headers: {
-        Authorization: basic
-      },
+      headers: { Authorization: basic }
     });
 
-    if (!resp.ok) {
-      throw new Error("Credenciales inválidas");
-    }
+    if (!resp.ok) throw new Error("Usuario o contraseña incorrectos");
 
-    // Guardamos token
     localStorage.setItem("auth", basic);
     localStorage.setItem("username", user.toUpperCase());
 
-    // Rol provisional basado en nombre
+    // Rol determinado por nombre del usuario
     let role = "SECRETARIA";
     if (user.toLowerCase() === "admin") role = "ADMIN";
 
     localStorage.setItem("role", role);
 
-    toast("Bienvenido " + user, "success");
+    toast(`Bienvenido ${user}`, "success");
 
-    // Redirección por rol
-    if (role === "ADMIN")
-      location.href = "dashboard.html";
-    else
-      location.href = "alumnos.html";
+    if (role === "ADMIN") location.href = "dashboard.html";
+    else location.href = "alumnos.html";
 
   } catch (err) {
-    toast(err.message || "Error en login", "error");
+    toast(err.message, "error");
   }
 }
 
@@ -132,9 +123,7 @@ function getRole() {
 }
 
 function ensureAuth() {
-  if (!localStorage.getItem("auth")) {
-    location.href = "login.html";
-  }
+  if (!localStorage.getItem("auth")) location.href = "login.html";
 }
 
 function ensureAdmin() {
@@ -149,66 +138,51 @@ function ensureAdmin() {
 // ========================= VALIDACIÓN FORMULARIOS =====================
 // ======================================================================
 
-function attachLiveValidation(formElement) {
-  if (!formElement) return;
-  const inputs = formElement.querySelectorAll("input[required], textarea[required]");
+function attachLiveValidation(form) {
+  const inputs = form.querySelectorAll("input[required], textarea[required]");
   inputs.forEach((input) => {
     input.addEventListener("input", () => {
       if (!input.value.trim()) {
-        input.classList.remove("is-valid");
         input.classList.add("is-invalid");
+        input.classList.remove("is-valid");
       } else {
-        input.classList.remove("is-invalid");
         input.classList.add("is-valid");
+        input.classList.remove("is-invalid");
       }
     });
   });
 }
 
-function clearValidation(formElement) {
-  if (!formElement) return;
-  const inputs = formElement.querySelectorAll("input, textarea");
-  inputs.forEach((input) => {
-    input.classList.remove("is-valid");
-    input.classList.remove("is-invalid");
-  });
+function clearValidation(form) {
+  const inputs = form.querySelectorAll("input, textarea");
+  inputs.forEach((i) => i.classList.remove("is-valid", "is-invalid"));
 }
 
 // ======================================================================
 // ========================= PAGINACIÓN / FILTROS =======================
 // ======================================================================
 
-function paginate(array, page, size) {
+function paginate(arr, page, size) {
   const start = (page - 1) * size;
-  return array.slice(start, start + size);
+  return arr.slice(start, start + size);
 }
 
 function applyAlumnosFilters() {
   let result = [...alumnosData];
 
-  if (alumnosFilters.cedula) {
-    result = result.filter((a) => (a.estCed || "").toLowerCase().includes(alumnosFilters.cedula.toLowerCase()));
-  }
-  if (alumnosFilters.nombre) {
-    result = result.filter((a) => (a.estNom || "").toLowerCase().includes(alumnosFilters.nombre.toLowerCase()));
-  }
-  if (alumnosFilters.apellido) {
-    result = result.filter((a) => (a.estApe || "").toLowerCase().includes(alumnosFilters.apellido.toLowerCase()));
-  }
+  if (alumnosFilters.cedula)
+    result = result.filter(a => a.estCed.toLowerCase().includes(alumnosFilters.cedula.toLowerCase()));
+
+  if (alumnosFilters.nombre)
+    result = result.filter(a => a.estNom.toLowerCase().includes(alumnosFilters.nombre.toLowerCase()));
+
+  if (alumnosFilters.apellido)
+    result = result.filter(a => a.estApe.toLowerCase().includes(alumnosFilters.apellido.toLowerCase()));
 
   if (alumnosSearch) {
     const q = alumnosSearch.toLowerCase();
-    result = result.filter((a) =>
-      [
-        a.estCed,
-        a.estNom,
-        a.estApe,
-        a.estTel,
-        a.estDir,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
+    result = result.filter(a =>
+      `${a.estCed} ${a.estNom} ${a.estApe} ${a.estTel} ${a.estDir}`.toLowerCase().includes(q)
     );
   }
 
@@ -218,25 +192,16 @@ function applyAlumnosFilters() {
 function applyCursosFilters() {
   let result = [...cursosData];
 
-  if (cursosFilters.nombre) {
-    result = result.filter((c) => (c.nombre || "").toLowerCase().includes(cursosFilters.nombre.toLowerCase()));
-  }
-  if (cursosFilters.alumnoCed) {
-    result = result.filter((c) => (c.alumnoCed || "").toLowerCase().includes(cursosFilters.alumnoCed.toLowerCase()));
-  }
+  if (cursosFilters.nombre)
+    result = result.filter(c => c.nombre.toLowerCase().includes(cursosFilters.nombre.toLowerCase()));
+
+  if (cursosFilters.alumnoCed)
+    result = result.filter(c => c.alumnoCed.toLowerCase().includes(cursosFilters.alumnoCed.toLowerCase()));
 
   if (cursosSearch) {
     const q = cursosSearch.toLowerCase();
-    result = result.filter((c) =>
-      [
-        c.id,
-        c.nombre,
-        c.alumnoCed,
-        c.alumnoNombreCompleto,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
+    result = result.filter(c =>
+      `${c.id} ${c.nombre} ${c.alumnoCed} ${c.alumnoNombreCompleto}`.toLowerCase().includes(q)
     );
   }
 
@@ -244,67 +209,62 @@ function applyCursosFilters() {
 }
 
 // ======================================================================
-// ========================= ALUMNOS (CRUD + UI) ========================
+// ========================= CRUD ALUMNOS ===============================
 // ======================================================================
 
+// Cargar lista
 async function fetchAlumnos() {
   try {
     const resp = await fetch(API_ALUMNOS, { headers: getHeaders() });
     if (!resp.ok) throw new Error("Error al cargar alumnos");
+
     alumnosData = await resp.json();
     alumnosPage = 1;
     renderAlumnosTable();
   } catch (e) {
-    toast(e.message || "No se pudo conectar con el servidor", "error");
+    toast(e.message, "error");
   }
 }
 
+// Render tabla
 function renderAlumnosTable() {
   const tbody = document.getElementById("tbodyAlumnos");
   if (!tbody) return;
 
-  const dataFiltered = applyAlumnosFilters();
-  const total = dataFiltered.length || 0;
+  const filtered = applyAlumnosFilters();
+  const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / alumnosPageSize));
   if (alumnosPage > totalPages) alumnosPage = totalPages;
 
-  const pageItems = paginate(dataFiltered, alumnosPage, alumnosPageSize);
+  const items = paginate(filtered, alumnosPage, alumnosPageSize);
 
-  let html = "";
-  pageItems.forEach((a) => {
-    html += `
-      <tr>
-        <td>${a.estCed}</td>
-        <td>${a.estNom}</td>
-        <td>${a.estApe}</td>
-        <td>${a.estTel || ""}</td>
-        <td>${a.estDir || ""}</td>
-        <td>
-          <button class="btn btn-sm btn-warning me-1" onclick="abrirModalEditarAlumno('${a.estCed}')">Editar</button>
-          <button class="btn btn-sm btn-danger" onclick="eliminarAlumno('${a.estCed}')">Eliminar</button>
-        </td>
-      </tr>
-    `;
-  });
-
-  tbody.innerHTML = html || `<tr><td colspan="6" class="text-center text-muted">Sin resultados</td></tr>`;
+  tbody.innerHTML = items.map(a => `
+    <tr>
+      <td>${a.estCed}</td>
+      <td>${a.estNom}</td>
+      <td>${a.estApe}</td>
+      <td>${a.estTel || ""}</td>
+      <td>${a.estDir || ""}</td>
+      <td>
+        <button class="btn btn-warning btn-sm me-1" onclick="abrirModalEditarAlumno('${a.estCed}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarAlumno('${a.estCed}')">Eliminar</button>
+      </td>
+    </tr>
+  `).join("");
 
   const info = document.getElementById("alumnosPaginationInfo");
   if (info) {
-    const start = total === 0 ? 0 : (alumnosPage - 1) * alumnosPageSize + 1;
+    const start = (alumnosPage - 1) * alumnosPageSize + 1;
     const end = Math.min(alumnosPage * alumnosPageSize, total);
-    info.textContent = `Mostrando ${start}-${end} de ${total}`;
+    info.textContent = total ? `Mostrando ${start}-${end} de ${total}` : "Sin resultados";
   }
 
-  const btnPrev = document.getElementById("alumnosPrev");
-  const btnNext = document.getElementById("alumnosNext");
-  if (btnPrev) btnPrev.disabled = alumnosPage <= 1;
-  if (btnNext) btnNext.disabled = alumnosPage >= totalPages;
+  document.getElementById("alumnosPrev").disabled = alumnosPage <= 1;
+  document.getElementById("alumnosNext").disabled = alumnosPage >= totalPages;
 }
 
-function alumnosCambioPagina(delta) {
-  alumnosPage += delta;
-  if (alumnosPage < 1) alumnosPage = 1;
+function alumnosCambioPagina(n) {
+  alumnosPage += n;
   renderAlumnosTable();
 }
 
@@ -315,80 +275,61 @@ function alumnosCambioSearch(input) {
 }
 
 function alumnosCambioFiltros() {
-  const ced = document.getElementById("filterCedula");
-  const nom = document.getElementById("filterNombre");
-  const ape = document.getElementById("filterApellido");
-
-  alumnosFilters.cedula = ced ? ced.value.trim() : "";
-  alumnosFilters.nombre = nom ? nom.value.trim() : "";
-  alumnosFilters.apellido = ape ? ape.value.trim() : "";
+  alumnosFilters.cedula = document.getElementById("filterCedula").value.trim();
+  alumnosFilters.nombre = document.getElementById("filterNombre").value.trim();
+  alumnosFilters.apellido = document.getElementById("filterApellido").value.trim();
 
   alumnosPage = 1;
   renderAlumnosTable();
 }
 
-// ---------- Crear alumno -----------
-
+// Crear alumno
 function abrirModalCrearAlumno() {
-  const modalEl = document.getElementById("modalCrearAlumno");
+  const modal = new bootstrap.Modal("#modalCrearAlumno");
   const form = document.getElementById("formCrearAlumno");
-  if (!modalEl || !form) return;
-
   form.reset();
   clearValidation(form);
   attachLiveValidation(form);
-
-  const modal = new bootstrap.Modal(modalEl);
   modal.show();
 }
 
 async function crearAlumno(e) {
   e.preventDefault();
-  const form = e.target;
+  const f = e.target;
 
   const data = {
-    estCed: form.estCed.value.trim(),
-    estNom: form.estNom.value.trim(),
-    estApe: form.estAape?.value?.trim() ?? form.estApe.value.trim(),
-    estTel: form.estTel.value.trim(),
-    estDir: form.estDir.value.trim(),
+    estCed: f.estCed.value.trim(),
+    estNom: f.estNom.value.trim(),
+    estApe: f.estApe.value.trim(),
+    estTel: f.estTel.value.trim(),
+    estDir: f.estDir.value.trim(),
   };
 
-  if (!data.estCed || !data.estNom || !data.estApe) {
-    toast("Cédula, nombres y apellidos son obligatorios", "warning");
-    return;
-  }
+  if (!data.estCed || !data.estNom || !data.estApe)
+    return toast("Cédula, nombre y apellido son obligatorios", "warning");
 
   try {
-    const resp = await fetch(API_ALUMNOS, {
+    await fetch(API_ALUMNOS, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!resp.ok) throw new Error("Error al crear alumno");
 
-    toast("Alumno creado correctamente", "success");
-
-    const modalEl = document.getElementById("modalCrearAlumno");
-    bootstrap.Modal.getInstance(modalEl).hide();
-
-    await fetchAlumnos();
-  } catch (e) {
-    toast(e.message || "No se pudo crear el alumno", "error");
+    toast("Alumno creado", "success");
+    bootstrap.Modal.getInstance(document.getElementById("modalCrearAlumno")).hide();
+    fetchAlumnos();
+  } catch {
+    toast("Error al crear alumno", "error");
   }
 }
 
-// ---------- Editar alumno -----------
-
+// Editar alumno
 async function abrirModalEditarAlumno(ced) {
-  const modalEl = document.getElementById("modalEditarAlumno");
+  const modal = new bootstrap.Modal("#modalEditarAlumno");
   const form = document.getElementById("formEditarAlumno");
-  if (!modalEl || !form) return;
 
   try {
     const resp = await fetch(`${API_ALUMNOS}/${ced}`, { headers: getHeaders() });
-    if (!resp.ok) throw new Error("No se pudo cargar el alumno");
-
     const a = await resp.json();
 
     form.estCedE.value = a.estCed;
@@ -400,82 +341,68 @@ async function abrirModalEditarAlumno(ced) {
     clearValidation(form);
     attachLiveValidation(form);
 
-    const modal = new bootstrap.Modal(modalEl);
     modal.show();
-  } catch (e) {
-    toast(e.message || "Error al cargar datos del alumno", "error");
+  } catch {
+    toast("Error al cargar alumno", "error");
   }
 }
 
 async function actualizarAlumno(e) {
   e.preventDefault();
-  const form = e.target;
-  const ced = form.estCedE.value.trim();
+  const f = e.target;
 
+  const ced = f.estCedE.value;
   const data = {
-    estNom: form.estNomE.value.trim(),
-    estApe: form.estApeE.value.trim(),
-    estTel: form.estTelE.value.trim(),
-    estDir: form.estDirE.value.trim(),
+    estNom: f.estNomE.value.trim(),
+    estApe: f.estApeE.value.trim(),
+    estTel: f.estTelE.value.trim(),
+    estDir: f.estDirE.value.trim(),
   };
 
-  if (!data.estNom || !data.estApe) {
-    toast("Nombres y apellidos son obligatorios", "warning");
-    return;
-  }
-
   try {
-    const resp = await fetch(`${API_ALUMNOS}/${ced}`, {
+    await fetch(`${API_ALUMNOS}/${ced}`, {
       method: "PUT",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!resp.ok) throw new Error("Error al actualizar alumno");
 
-    toast("Alumno actualizado correctamente", "success");
-
-    const modalEl = document.getElementById("modalEditarAlumno");
-    bootstrap.Modal.getInstance(modalEl).hide();
-
-    await fetchAlumnos();
-  } catch (e) {
-    toast(e.message || "No se pudo actualizar el alumno", "error");
+    toast("Alumno actualizado", "success");
+    bootstrap.Modal.getInstance(document.getElementById("modalEditarAlumno")).hide();
+    fetchAlumnos();
+  } catch {
+    toast("Error al actualizar alumno", "error");
   }
 }
 
-// ---------- Eliminar alumno -----------
-
+// Eliminar alumno
 async function eliminarAlumno(ced) {
-  const ok = await confirmDialog("¿Eliminar alumno?", `Se eliminará el alumno ${ced}`);
-  if (!ok) return;
+  if (!(await confirmDialog("Eliminar alumno", `¿Eliminar a ${ced}?`))) return;
 
   try {
-    const resp = await fetch(`${API_ALUMNOS}/${ced}`, {
+    await fetch(`${API_ALUMNOS}/${ced}`, {
       method: "DELETE",
       headers: getHeaders(),
     });
-    if (!resp.ok) throw new Error("No se pudo eliminar el alumno");
 
     toast("Alumno eliminado", "success");
-    await fetchAlumnos();
-  } catch (e) {
-    toast(e.message || "Error al eliminar alumno", "error");
+    fetchAlumnos();
+  } catch {
+    toast("No se pudo eliminar", "error");
   }
 }
 
 // ======================================================================
-// ========================= CURSOS (CRUD + UI) =========================
+// ========================= CRUD CURSOS ===============================
 // ======================================================================
 
 async function fetchCursos() {
   try {
     const resp = await fetch(API_CURSOS, { headers: getHeaders() });
-    if (!resp.ok) throw new Error("Error al cargar cursos");
     cursosData = await resp.json();
     cursosPage = 1;
     renderCursosTable();
-  } catch (e) {
-    toast(e.message || "No se pudo conectar con el servidor", "error");
+  } catch {
+    toast("Error al cargar cursos", "error");
   }
 }
 
@@ -483,46 +410,38 @@ function renderCursosTable() {
   const tbody = document.getElementById("tbodyCursos");
   if (!tbody) return;
 
-  const dataFiltered = applyCursosFilters();
-  const total = dataFiltered.length || 0;
-  const totalPages = Math.max(1, Math.ceil(total / cursosPageSize));
+  const filtered = applyCursosFilters();
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / cursosPageSize);
+
   if (cursosPage > totalPages) cursosPage = totalPages;
 
-  const pageItems = paginate(dataFiltered, cursosPage, cursosPageSize);
+  const items = paginate(filtered, cursosPage, cursosPageSize);
 
-  let html = "";
-  pageItems.forEach((c) => {
-    html += `
-      <tr>
-        <td>${c.id}</td>
-        <td>${c.nombre}</td>
-        <td>${c.alumnoCed} - ${c.alumnoNombreCompleto}</td>
-        <td>
-          <button class="btn btn-sm btn-warning me-1" onclick="abrirModalEditarCurso(${c.id})">Editar</button>
-          <button class="btn btn-sm btn-danger" onclick="eliminarCurso(${c.id})">Eliminar</button>
-        </td>
-      </tr>
-    `;
-  });
+  tbody.innerHTML = items
+    .map(
+      (c) => `
+    <tr>
+      <td>${c.id}</td>
+      <td>${c.nombre}</td>
+      <td>${c.alumnoCed} - ${c.alumnoNombreCompleto}</td>
+      <td>
+        <button class="btn btn-warning btn-sm me-1" onclick="abrirModalEditarCurso(${c.id})">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarCurso(${c.id})">Eliminar</button>
+      </td>
+    </tr>`
+    )
+    .join("");
 
-  tbody.innerHTML = html || `<tr><td colspan="4" class="text-center text-muted">Sin resultados</td></tr>`;
+  document.getElementById("cursosPaginationInfo").textContent =
+    total ? `Mostrando ${items.length} de ${total}` : "Sin resultados";
 
-  const info = document.getElementById("cursosPaginationInfo");
-  if (info) {
-    const start = total === 0 ? 0 : (cursosPage - 1) * cursosPageSize + 1;
-    const end = Math.min(cursosPage * cursosPageSize, total);
-    info.textContent = `Mostrando ${start}-${end} de ${total}`;
-  }
-
-  const btnPrev = document.getElementById("cursosPrev");
-  const btnNext = document.getElementById("cursosNext");
-  if (btnPrev) btnPrev.disabled = cursosPage <= 1;
-  if (btnNext) btnNext.disabled = cursosPage >= totalPages;
+  document.getElementById("cursosPrev").disabled = cursosPage <= 1;
+  document.getElementById("cursosNext").disabled = cursosPage >= totalPages;
 }
 
-function cursosCambioPagina(delta) {
-  cursosPage += delta;
-  if (cursosPage < 1) cursosPage = 1;
+function cursosCambioPagina(n) {
+  cursosPage += n;
   renderCursosTable();
 }
 
@@ -533,75 +452,54 @@ function cursosCambioSearch(input) {
 }
 
 function cursosCambioFiltros() {
-  const nom = document.getElementById("filterCursoNombre");
-  const ced = document.getElementById("filterCursoAlumnoCed");
-
-  cursosFilters.nombre = nom ? nom.value.trim() : "";
-  cursosFilters.alumnoCed = ced ? ced.value.trim() : "";
+  cursosFilters.nombre = document.getElementById("filterCursoNombre").value.trim();
+  cursosFilters.alumnoCed = document.getElementById("filterCursoAlumnoCed").value.trim();
 
   cursosPage = 1;
   renderCursosTable();
 }
 
-// ---------- Crear curso -----------
-
+// Crear curso
 function abrirModalCrearCurso() {
-  const modalEl = document.getElementById("modalCrearCurso");
+  const modal = new bootstrap.Modal("#modalCrearCurso");
   const form = document.getElementById("formCrearCurso");
-  if (!modalEl || !form) return;
-
   form.reset();
   clearValidation(form);
   attachLiveValidation(form);
-
-  const modal = new bootstrap.Modal(modalEl);
   modal.show();
 }
 
 async function crearCurso(e) {
   e.preventDefault();
-  const form = e.target;
+  const f = e.target;
 
   const data = {
-    nombre: form.nombre.value.trim(),
-    alumnoCed: form.alumnoCed.value.trim(),
+    nombre: f.nombre.value.trim(),
+    alumnoCed: f.alumnoCed.value.trim(),
   };
 
-  if (!data.nombre || !data.alumnoCed) {
-    toast("Nombre del curso y cédula del alumno son obligatorios", "warning");
-    return;
-  }
-
   try {
-    const resp = await fetch(API_CURSOS, {
+    await fetch(API_CURSOS, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!resp.ok) throw new Error("Error al crear curso");
 
-    toast("Curso creado correctamente", "success");
-
-    const modalEl = document.getElementById("modalCrearCurso");
-    bootstrap.Modal.getInstance(modalEl).hide();
-
-    await fetchCursos();
-  } catch (e) {
-    toast(e.message || "No se pudo crear el curso", "error");
+    toast("Curso creado", "success");
+    bootstrap.Modal.getInstance(document.getElementById("modalCrearCurso")).hide();
+    fetchCursos();
+  } catch {
+    toast("Error al crear curso", "error");
   }
 }
 
-// ---------- Editar curso -----------
-
+// Editar curso
 async function abrirModalEditarCurso(id) {
-  const modalEl = document.getElementById("modalEditarCurso");
+  const modal = new bootstrap.Modal("#modalEditarCurso");
   const form = document.getElementById("formEditarCurso");
-  if (!modalEl || !form) return;
 
   try {
     const resp = await fetch(`${API_CURSOS}/${id}`, { headers: getHeaders() });
-    if (!resp.ok) throw new Error("No se pudo cargar el curso");
-
     const c = await resp.json();
 
     form.idE.value = c.id;
@@ -611,64 +509,49 @@ async function abrirModalEditarCurso(id) {
     clearValidation(form);
     attachLiveValidation(form);
 
-    const modal = new bootstrap.Modal(modalEl);
     modal.show();
-  } catch (e) {
-    toast(e.message || "Error al cargar datos del curso", "error");
+  } catch {
+    toast("Error al cargar curso", "error");
   }
 }
 
 async function actualizarCurso(e) {
   e.preventDefault();
-  const form = e.target;
+  const f = e.target;
 
-  const id = form.idE.value;
   const data = {
-    nombre: form.nombreE.value.trim(),
-    alumnoCed: form.alumnoCedE.value.trim(),
+    nombre: f.nombreE.value.trim(),
+    alumnoCed: f.alumnoCedE.value.trim(),
   };
 
-  if (!data.nombre || !data.alumnoCed) {
-    toast("Todos los campos son obligatorios", "warning");
-    return;
-  }
-
   try {
-    const resp = await fetch(`${API_CURSOS}/${id}`, {
+    await fetch(`${API_CURSOS}/${f.idE.value}`, {
       method: "PUT",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!resp.ok) throw new Error("Error al actualizar curso");
 
-    toast("Curso actualizado correctamente", "success");
-
-    const modalEl = document.getElementById("modalEditarCurso");
-    bootstrap.Modal.getInstance(modalEl).hide();
-
-    await fetchCursos();
-  } catch (e) {
-    toast(e.message || "No se pudo actualizar el curso", "error");
+    toast("Curso actualizado", "success");
+    bootstrap.Modal.getInstance(document.getElementById("modalEditarCurso")).hide();
+    fetchCursos();
+  } catch {
+    toast("Error al actualizar curso", "error");
   }
 }
 
-// ---------- Eliminar curso -----------
-
 async function eliminarCurso(id) {
-  const ok = await confirmDialog("¿Eliminar curso?", `Se eliminará el curso ${id}`);
-  if (!ok) return;
+  if (!(await confirmDialog("Eliminar curso", `¿Eliminar curso ${id}?`))) return;
 
   try {
-    const resp = await fetch(`${API_CURSOS}/${id}`, {
+    await fetch(`${API_CURSOS}/${id}`, {
       method: "DELETE",
       headers: getHeaders(),
     });
-    if (!resp.ok) throw new Error("No se pudo eliminar el curso");
 
     toast("Curso eliminado", "success");
-    await fetchCursos();
-  } catch (e) {
-    toast(e.message || "Error al eliminar curso", "error");
+    fetchCursos();
+  } catch {
+    toast("Error al eliminar curso", "error");
   }
 }
 
@@ -679,61 +562,43 @@ async function eliminarCurso(id) {
 async function initDashboard() {
   loadTheme();
   ensureAdmin();
+
   try {
     const [alResp, cuResp] = await Promise.all([
       fetch(API_ALUMNOS, { headers: getHeaders() }),
       fetch(API_CURSOS, { headers: getHeaders() }),
     ]);
-    if (!alResp.ok || !cuResp.ok) throw new Error("Error al cargar datos");
 
     const alumnos = await alResp.json();
     const cursos = await cuResp.json();
 
-    const totalAl = document.getElementById("totalAlumnos");
-    const totalCu = document.getElementById("totalCursos");
-    const userName = document.getElementById("userName");
+    document.getElementById("totalAlumnos").textContent = alumnos.length;
+    document.getElementById("totalCursos").textContent = cursos.length;
+    document.getElementById("userName").textContent =
+      localStorage.getItem("username");
 
-    if (totalAl) totalAl.textContent = alumnos.length;
-    if (totalCu) totalCu.textContent = cursos.length;
-    if (userName) userName.textContent = localStorage.getItem("username") || "admin";
-
-    // Conteo cursos por alumno
-    const conteo = {};
-    cursos.forEach((c) => {
-      const key = c.alumnoNombreCompleto || c.alumnoCed;
-      conteo[key] = (conteo[key] || 0) + 1;
+    // Conteo para gráfica
+    const counts = {};
+    cursos.forEach(c => {
+      const name = c.alumnoNombreCompleto || c.alumnoCed;
+      counts[name] = (counts[name] || 0) + 1;
     });
 
-    const labels = Object.keys(conteo);
-    const data = Object.values(conteo);
+    const labels = Object.keys(counts);
+    const data = Object.values(counts);
 
-    const ctx = document.getElementById("chartCursosPorAlumno");
-    if (ctx && labels.length) {
-      new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Cursos por alumno",
-              data,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { precision: 0 },
-            },
-          },
-        },
-      });
-    }
-
-  } catch (e) {
-    toast(e.message || "No se pudo cargar el dashboard", "error");
+    new Chart(document.getElementById("chartCursosPorAlumno"), {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Cursos por alumno",
+          data
+        }]
+      }
+    });
+  } catch {
+    toast("Error al cargar dashboard", "error");
   }
 }
 
@@ -752,5 +617,3 @@ function initCursosPage() {
   ensureAdmin();
   fetchCursos();
 }
-
-// login.html usaría: loadTheme() directamente desde script

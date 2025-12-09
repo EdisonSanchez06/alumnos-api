@@ -1,97 +1,96 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <title>Inicio – Sistema Académico</title>
 
-    <!-- BOOTSTRAP 5 CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <!-- Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- CSS propio -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
-<body>
+<body onload="loadTheme()">
 
+<!-- ================= CHECK LOGIN ================= -->
 <script>
-    // Si no hay sesión => login
     if (!localStorage.getItem("auth")) {
         location.href = "login.html";
     }
 </script>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4 shadow-sm">
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm py-2">
     <div class="container-fluid">
 
         <a class="navbar-brand fw-bold" href="#">
-            <i class="bi bi-mortarboard-fill me-1"></i> SOA
+            <i class="bi bi-mortarboard-fill me-1"></i> Sistema Académico
         </a>
 
-        <div class="flex-grow-1">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link active" href="index.html">Inicio</a></li>
-                <li class="nav-item"><a class="nav-link" href="alumnos.html">Alumnos</a></li>
-                <li class="nav-item only-admin"><a class="nav-link" href="cursos.html">Cursos</a></li>
-                <li class="nav-item only-admin"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
-            </ul>
-        </div>
+        <span class="text-light small me-auto">
+            Bienvenido: <b id="userName"></b>
+        </span>
 
-        <div class="d-flex">
-            <span class="navbar-text me-3 text-light small" id="usuario-actual"></span>
-            <button class="btn btn-outline-light btn-sm" onclick="logout()">Salir</button>
-        </div>
+        <div class="d-flex align-items-center">
 
+            <button class="btn btn-light btn-sm me-2" onclick="toggleTheme()">
+                <i class="bi bi-moon-stars"></i>
+            </button>
+
+            <button class="btn btn-danger btn-sm" onclick="logout()">
+                <i class="bi bi-box-arrow-right me-1"></i> Salir
+            </button>
+
+        </div>
     </div>
 </nav>
 
-<div class="container">
+<!-- ================= CONTENIDO ================= -->
+<div class="container mt-5 text-center">
 
-    <h2 class="mb-3">Bienvenido 👋</h2>
-    <p class="lead mb-4">
-        Selecciona una opción según tu rol.
-    </p>
+    <h2 class="fw-bold mb-1">Bienvenido 👋</h2>
+    <p class="text-muted fs-5">Selecciona un módulo para comenzar</p>
 
-    <div class="row g-4">
+    <div class="row mt-4 g-4 justify-content-center">
 
-        <!-- ALUMNOS (todos los roles) -->
-        <div class="col-md-4">
-            <a href="alumnos.html" class="text-decoration-none text-reset">
-                <div class="card card-link shadow-sm">
-                    <div class="card-body text-center">
-                        <h3 class="mb-2 text-primary">
-                            <i class="bi bi-people-fill me-1"></i> Alumnos
-                        </h3>
-                        <p class="text-muted mb-0">CRUD completo de alumnos</p>
-                    </div>
+        <!-- CARD ALUMNOS -->
+        <div class="col-md-4 col-sm-6">
+            <a href="alumnos.html" class="text-decoration-none">
+                <div class="module-card shadow-sm">
+                    <i class="bi bi-people-fill module-icon text-primary"></i>
+                    <h4 class="fw-bold mt-2">Alumnos</h4>
+                    <p class="text-muted">Gestionar estudiantes registrados</p>
                 </div>
             </a>
         </div>
 
-        <!-- CURSOS (solo admin, se oculta por JS) -->
-        <div class="col-md-4 only-admin">
-            <a href="cursos.html" class="text-decoration-none text-reset">
-                <div class="card card-link shadow-sm">
-                    <div class="card-body text-center">
-                        <h3 class="mb-2 text-success">
-                            <i class="bi bi-journal-bookmark-fill me-1"></i> Cursos
-                        </h3>
-                        <p class="text-muted mb-0">CRUD de cursos por alumno</p>
-                    </div>
+        <!-- CARD CURSOS (solo ADMIN) -->
+        <div class="col-md-4 col-sm-6 only-admin">
+            <a href="cursos.html" class="text-decoration-none">
+                <div class="module-card shadow-sm">
+                    <i class="bi bi-journal-code module-icon text-success"></i>
+                    <h4 class="fw-bold mt-2">Cursos</h4>
+                    <p class="text-muted">Gestión completa de cursos</p>
                 </div>
             </a>
         </div>
 
-        <!-- DASHBOARD (solo admin) -->
-        <div class="col-md-4 only-admin">
-            <a href="dashboard.html" class="text-decoration-none text-reset">
-                <div class="card card-link shadow-sm">
-                    <div class="card-body text-center">
-                        <h3 class="mb-2 text-info">
-                            <i class="bi bi-bar-chart-fill me-1"></i> Dashboard
-                        </h3>
-                        <p class="text-muted mb-0">Estadísticas generales</p>
-                    </div>
+        <!-- CARD DASHBOARD (solo ADMIN) -->
+        <div class="col-md-4 col-sm-6 only-admin">
+            <a href="dashboard.html" class="text-decoration-none">
+                <div class="module-card shadow-sm">
+                    <i class="bi bi-bar-chart-line module-icon text-warning"></i>
+                    <h4 class="fw-bold mt-2">Dashboard</h4>
+                    <p class="text-muted">Estadísticas y reportes gráficos</p>
                 </div>
             </a>
         </div>
@@ -100,16 +99,16 @@
 
 </div>
 
+<!-- ================= JS ================= -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/app.js"></script>
 
 <script>
-    const user = localStorage.getItem("username") || "Invitado";
-    const role = localStorage.getItem("role") || "";
-    document.getElementById("usuario-actual").innerHTML = `${user} (${role})`;
+    document.getElementById("userName").textContent =
+        localStorage.getItem("username") || "";
 
-    // Ocultar elementos solo-admin si no lo es
-    if (role !== "ADMIN") {
+    // Ocultar tarjetas para SECRETARIA
+    if (localStorage.getItem("role") !== "ADMIN") {
         document.querySelectorAll(".only-admin").forEach(el => el.classList.add("d-none"));
     }
 </script>
