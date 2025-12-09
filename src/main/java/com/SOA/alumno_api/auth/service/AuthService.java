@@ -17,43 +17,44 @@ public class AuthService {
     private final AlumnoRepository alumnoRepository;
     private final PasswordEncoder passwordEncoder;
 
-    /**
-     * Registro de usuario
-     */
     public String register(RegisterRequest req) {
 
-        // 1. Validar si ya existe username
+        // Validar username único
         if (usuarioRepository.existsByUsername(req.getUsername())) {
             return "El usuario ya está registrado";
         }
 
-        // 2. Validar rol
+        // Validar rol
         if (req.getRole() == null || req.getRole().isBlank()) {
-            return "Debe indicar el rol";
+            return "Debe indicar el rol (ADMIN o SECRETARIA)";
         }
 
-        // 3. Validar estudiante
-        if (req.getRole().equalsIgnoreCase("USER")) {
+        // Validar enum
+        Rol rol;
+        try {
+            rol = Rol.valueOf(req.getRole().toUpperCase());
+        } catch (Exception e) {
+            return "Rol inválido. Solo ADMIN o SECRETARIA";
+        }
 
+        // Si el rol fuera USER, validar existencia del alumno (opcional)
+        if (rol == Rol.USER) {
             if (req.getCedula() == null || req.getCedula().isBlank()) {
                 return "Debe ingresar una cédula";
             }
 
-            boolean existeAlumno = alumnoRepository.existsByEstCed(req.getCedula());
-
-            if (!existeAlumno) {
+            if (!alumnoRepository.existsByEstCed(req.getCedula())) {
                 return "No existe un alumno con esa cédula";
             }
         }
 
-        // 4. Crear entidad
+        // Crear y guardar el usuario
         Usuario user = new Usuario();
         user.setUsername(req.getUsername());
         user.setPassword(passwordEncoder.encode(req.getPassword()));
-        user.setRole(Rol.valueOf(req.getRole()));
+        user.setRole(rol);
         user.setCedula(req.getCedula());
 
-        // 5. Guardar
         usuarioRepository.save(user);
 
         return "Usuario registrado correctamente";

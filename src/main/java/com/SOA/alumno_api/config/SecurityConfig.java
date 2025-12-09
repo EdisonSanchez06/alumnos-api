@@ -8,26 +8,29 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    // ===============================
+    // 🔑 PasswordEncoder requerido
+    // ===============================
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // ===============================
-                // 🔓 CSRF OFF (requerido para frontend)
-                // ===============================
                 .csrf(csrf -> csrf.disable())
 
-                // ===============================
-                // 🔐 AUTORIZACIÓN
-                // ===============================
                 .authorizeHttpRequests(auth -> auth
 
-                        // RUTAS PÚBLICAS (HTML + STATIC)
                         .requestMatchers(
                                 "/",
                                 "/index.html",
@@ -40,30 +43,17 @@ public class SecurityConfig {
                                 "/favicon.ico"
                         ).permitAll()
 
-                        // ===============================
-                        // ROLES SEGÚN REQUERIMIENTOS
-                        // ===============================
-
-                        // SECRETARIA y ADMIN → CRUD alumnos
                         .requestMatchers("/api/alumnos/**")
                         .hasAnyRole("ADMIN", "SECRETARIA")
 
-                        // SOLO ADMIN → CRUD cursos
                         .requestMatchers("/api/cursos/**")
                         .hasRole("ADMIN")
 
-                        // Cualquier otra ruta → requiere login
                         .anyRequest().authenticated()
                 )
 
-                // ===============================
-                // 🔐 LOGIN BASIC
-                // ===============================
                 .httpBasic(Customizer.withDefaults())
 
-                // ===============================
-                // 🌎 CORS permitido (desde cualquier origen)
-                // ===============================
                 .cors(cors -> cors.configure(http));
 
         return http.build();
