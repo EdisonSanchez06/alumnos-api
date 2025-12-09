@@ -600,6 +600,31 @@ function validarNombreCurso(texto) {
   return /^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ]{3,40}$/.test(texto);
 }
 
+function validarNombreCurso(nombre) {
+    const regex = /^[A-Za-zÁÉÍÓÚÑáéíóúñ ]{3,}$/;
+
+    if (!regex.test(nombre)) {
+        toast("El nombre del curso es inválido. Solo letras y mínimo 3 caracteres.", "warning");
+        return false;
+    }
+
+    // Opcional: lista sugerida de materias reales
+    const materiasValidas = [
+        "Matemáticas", "Lenguaje", "Ciencias", "Historia", "Inglés",
+        "Física", "Química", "Biología", "Geografía", "Computación"
+    ];
+
+    const coincide = materiasValidas.some(m =>
+        m.toLowerCase() === nombre.toLowerCase()
+    );
+
+    if (!coincide) {
+        toast("Materia no reconocida. Solo materias reales.", "warning");
+        return false;
+    }
+
+    return true;
+}
 
 // ======================================================================
 // ========================= CREAR CURSO ================================
@@ -625,7 +650,7 @@ async function crearCurso(e) {
     alumnoCed: f.alumnoCed.value.trim(),
   };
 
-  if (!data.nombre || !data.alumnoCed)
+  if (!validarNombreCurso(data.nombre)) 
     return toast("Todos los campos son obligatorios", "warning");
 
   if (!validarNombreCurso(data.nombre))
@@ -687,6 +712,7 @@ async function actualizarCurso(e) {
   };
 
   if (!validarNombreCurso(data.nombre))
+
     return toast("Nombre del curso no válido", "warning");
 
   if (!validarCedulaEcuatoriana(data.alumnoCed))
