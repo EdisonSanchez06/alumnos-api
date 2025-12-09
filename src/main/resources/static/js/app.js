@@ -74,7 +74,7 @@ async function confirmDialog(title = "¿Seguro?", text = "Esta acción no se pue
 // ========================= AUTH / ROLES ===============================
 // ======================================================================
 
-function login(e) {
+async function login(e) {
   e.preventDefault();
 
   const user = e.target.usuario.value.trim();
@@ -87,28 +87,34 @@ function login(e) {
 
   const basic = "Basic " + btoa(user + ":" + pass);
 
-  // Probamos autenticación llamando a alumnos
-  fetch(API_ALUMNOS, {
-    headers: {
-      Authorization: basic,
-    },
-  })
-    .then((r) => {
-      if (!r.ok) throw new Error("Credenciales inválidas");
+  try {
+    const resp = await fetch(API_BASE + "/auth/login", {
+      method: "GET",
+      headers: {
+        Authorization: basic,
+      },
+    });
 
-      localStorage.setItem("auth", basic);
-      localStorage.setItem("username", user);
+    if (!resp.ok) throw new Error("Credenciales inválidas");
 
-      if (user === "admin") {
-        localStorage.setItem("role", "ADMIN");
-        location.href = "dashboard.html";
-      } else {
-        localStorage.setItem("role", "SECRETARIA");
-        location.href = "alumnos.html";
-      }
-    })
-    .catch((err) => toast(err.message, "error"));
+    const data = await resp.json();
+
+    localStorage.setItem("auth", basic);
+    localStorage.setItem("username", data.user);
+    localStorage.setItem("role", data.role);
+
+    toast("Bienvenido " + data.user, "success");
+
+    if (data.role === "ADMIN")
+      location.href = "dashboard.html";
+    else
+      location.href = "alumnos.html";
+
+  } catch (err) {
+    toast(err.message || "Error de login", "error");
+  }
 }
+
 
 function logout() {
   localStorage.clear();
