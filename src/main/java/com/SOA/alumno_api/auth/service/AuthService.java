@@ -14,47 +14,43 @@ import org.springframework.stereotype.Service;
 public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
-    private final AlumnoRepository alumnoRepository;
+    private final AlumnoRepository alumnoRepository;  // aunque no lo usemos ahora, se puede dejar
     private final PasswordEncoder passwordEncoder;
 
+    /**
+     * Registro de usuario (solo roles ADMIN o SECRETARIA)
+     */
     public String register(RegisterRequest req) {
 
-        // Validar username único
+        // 1. Validar si ya existe username
         if (usuarioRepository.existsByUsername(req.getUsername())) {
             return "El usuario ya está registrado";
         }
 
-        // Validar rol
+        // 2. Validar rol
         if (req.getRole() == null || req.getRole().isBlank()) {
             return "Debe indicar el rol (ADMIN o SECRETARIA)";
         }
 
-        // Validar enum
+        // 3. Convertir rol a enum (solo ADMIN / SECRETARIA)
         Rol rol;
         try {
             rol = Rol.valueOf(req.getRole().toUpperCase());
         } catch (Exception e) {
-            return "Rol inválido. Solo ADMIN o SECRETARIA";
+            return "Rol inválido. Solo se permite ADMIN o SECRETARIA";
         }
 
-        // Si el rol fuera USER, validar existencia del alumno (opcional)
-        if (rol == Rol.USER) {
-            if (req.getCedula() == null || req.getCedula().isBlank()) {
-                return "Debe ingresar una cédula";
-            }
+        // 🔹 Si quisieras hacer alguna validación extra por rol,
+        // aquí puedes usar: if (rol == Rol.SECRETARIA) { ... }
 
-            if (!alumnoRepository.existsByEstCed(req.getCedula())) {
-                return "No existe un alumno con esa cédula";
-            }
-        }
-
-        // Crear y guardar el usuario
+        // 4. Crear entidad usuario
         Usuario user = new Usuario();
         user.setUsername(req.getUsername());
-        user.setPassword(passwordEncoder.encode(req.getPassword()));
+        user.setPassword(passwordEncoder.encode(req.getPassword())); // BCrypt
         user.setRole(rol);
-        user.setCedula(req.getCedula());
+        user.setCedula(req.getCedula()); // opcional, puede ir null
 
+        // 5. Guardar
         usuarioRepository.save(user);
 
         return "Usuario registrado correctamente";
