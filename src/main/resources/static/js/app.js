@@ -73,37 +73,52 @@ async function confirmDialog(title, text) {
 // ======================================================================
 // ========================= AUTH / ROLES ===============================
 // ======================================================================
-
 async function login(e) {
-  e.preventDefault();
+    e.preventDefault();
 
-  const user = e.target.usuario.value.trim();
-  const pass = e.target.clave.value.trim();
+    const user = e.target.usuario.value.trim();
+    const pass = e.target.clave.value.trim();
 
-  if (!user || !pass) return toast("Debe ingresar usuario y contraseña", "warning");
+    if (!user || !pass) {
+        toast("Debe ingresar usuario y contraseña", "warning");
+        return;
+    }
 
-  const basic = "Basic " + btoa(user + ":" + pass);
+    const basic = "Basic " + btoa(user + ":" + pass);
 
-  try {
-    const resp = await fetch(API_ALUMNOS, { headers: { Authorization: basic } });
+    try {
+        const resp = await fetch(API_BASE + "/auth/login", {
+            method: "GET",
+            headers: {
+                "Authorization": basic
+            }
+        });
 
-    if (!resp.ok) throw new Error("Usuario o contraseña incorrectos");
+        if (!resp.ok) {
+            toast("Credenciales incorrectas", "error");
+            return;
+        }
 
-    localStorage.setItem("auth", basic);
-    localStorage.setItem("username", user.toUpperCase());
+        const data = await resp.json();
 
-    let role = user.toLowerCase() === "admin" ? "ADMIN" : "SECRETARIA";
-    localStorage.setItem("role", role);
+        // Guardar sesión
+        localStorage.setItem("auth", basic);
+        localStorage.setItem("username", data.user);
+        localStorage.setItem("role", data.role);
 
-    toast("Bienvenido " + user, "success");
+        // Redirigir según rol
+        if (data.role === "ADMIN") {
+            location.href = "dashboard.html";
+        } else {
+            location.href = "alumnos.html";
+        }
 
-    if (role === "ADMIN") location.href = "dashboard.html";
-    else location.href = "alumnos.html";
-
-  } catch (err) {
-    toast(err.message, "error");
-  }
+    } catch (err) {
+        console.error(err);
+        toast("Error conectando con el servidor", "error");
+    }
 }
+
 
 function logout() {
   localStorage.clear();
