@@ -3,14 +3,15 @@ package com.soa.alumno_api.alumno.dto;
 import lombok.*;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class CursoResponseDTO {
 
     private Long id;
     private String nombre;
+    private String nivel;
+    private String paralelo;
 
-    private String alumnoCed;            // <- obligatorio
-    private String alumnoNombreCompleto;
+    private int totalAlumnos; // útil para el dashboard
 }

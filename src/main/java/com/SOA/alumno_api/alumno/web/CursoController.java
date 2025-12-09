@@ -1,69 +1,48 @@
 package com.soa.alumno_api.alumno.web;
 
 import com.soa.alumno_api.alumno.dto.CursoCreateDTO;
-import com.soa.alumno_api.alumno.dto.CursoResponseDTO;
 import com.soa.alumno_api.alumno.dto.CursoUpdateDTO;
+import com.soa.alumno_api.alumno.entity.Curso;
 import com.soa.alumno_api.alumno.service.CursoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 @RestController
 @RequestMapping("/api/cursos")
+@CrossOrigin(origins = {"*"})
 @RequiredArgsConstructor
-@CrossOrigin("*")
 public class CursoController {
 
-    private final CursoService cursoService;
-
-    @PostMapping
-    public ResponseEntity<CursoResponseDTO> crear(
-            @Valid @RequestBody CursoCreateDTO dto
-    ) {
-        return ResponseEntity.ok(cursoService.crear(dto));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<CursoResponseDTO> actualizar(
-            @PathVariable Long id,
-            @Valid @RequestBody CursoUpdateDTO dto
-    ) {
-        return ResponseEntity.ok(cursoService.actualizar(id, dto));
-    }
+    private final CursoService service;
 
     @GetMapping
-    public ResponseEntity<List<CursoResponseDTO>> listar() {
-        return ResponseEntity.ok(cursoService.listar());
+    public List<Curso> listar() {
+        return service.listar();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CursoResponseDTO> obtener(@PathVariable Long id) {
-        return ResponseEntity.ok(cursoService.obtener(id));
+    public Curso obtener(@PathVariable Long id) {
+        return service.buscarPorId(id);
     }
 
-    // Cursos de un alumno (ya lo tenías)
-    @GetMapping("/alumno/{alumnoCed}")
-    public ResponseEntity<List<CursoResponseDTO>> listarPorAlumno(
-            @PathVariable String alumnoCed
-    ) {
-        return ResponseEntity.ok(cursoService.listarPorAlumno(alumnoCed));
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Curso crear(@Valid @RequestBody CursoCreateDTO dto) {
+        return service.crear(dto);
     }
 
-    // NUEVO: asignar alumno a un curso (o cambiarlo)
-    @PutMapping("/{id}/alumno/{ced}")
-    public ResponseEntity<CursoResponseDTO> asignarAlumno(
-            @PathVariable Long id,
-            @PathVariable String ced
-    ) {
-        return ResponseEntity.ok(cursoService.asignarAlumno(id, ced));
+    @PutMapping("/{id}")
+    public Curso actualizar(@PathVariable Long id,
+                            @Valid @RequestBody CursoUpdateDTO dto) {
+        return service.actualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        cursoService.eliminar(id);
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void eliminar(@PathVariable Long id) {
+        service.eliminar(id);
     }
 }

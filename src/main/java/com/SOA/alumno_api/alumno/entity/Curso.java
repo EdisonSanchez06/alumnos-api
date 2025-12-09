@@ -1,31 +1,33 @@
 package com.soa.alumno_api.alumno.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import java.util.ArrayList;
+import java.util.List;
 @Entity
 @Table(name = "cursos")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class Curso {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nombre", nullable = false, length = 100)
+    @Column(nullable = false)
     private String nombre;
 
-    /**
-     * Importante:
-     * - EAGER → resuelve LazyInitializationException
-     * - referencedColumnName debe usar el nombre EXACTO de la columna
-     */
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "est_ced", referencedColumnName = "EST_CED", nullable = false)
-    @JsonIgnoreProperties({"cursos"}) // Evita recursión
-    private Alumno alumno;
+    @Column(nullable = false)
+    private String nivel;
+
+    @Column(nullable = false)
+    private String paralelo;
+
+    // UN CURSO tiene MUCHOS alumnos
+    @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL)
+    private List<Alumno> alumnos = new ArrayList<>();
 }

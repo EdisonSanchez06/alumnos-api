@@ -1,38 +1,35 @@
 package com.soa.alumno_api.alumno.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import java.util.List;
-import java.util.ArrayList;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 
 @Entity
 @Table(name = "alumnos")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class Alumno {
 
     @Id
-    @Column(name = "EST_CED", length = 20)
+    @Column(length = 10)
     private String estCed;
 
-    @Column(name = "est_nom", nullable = false, length = 100)
+    @Column(nullable = false)
     private String estNom;
 
-    @Column(name = "est_ape", nullable = false, length = 100)
+    @Column(nullable = false)
     private String estApe;
 
-    @Column(name = "est_dir", nullable = false, length = 150)
+    @Column(nullable = false)
     private String estDir;
 
-    @Column(name = "est_tel", nullable = false, length = 20)
+    @Column(nullable = false, length = 10)
     private String estTel;
 
-    @JsonIgnore // evita recursión infinita al serializar JSON
-    @OneToMany(mappedBy = "alumno", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Curso> cursos = new ArrayList<>();
+    // MUCHOS alumnos → UN curso
+    @ManyToOne
+    @JoinColumn(name = "curso_id")
+    private Curso curso;
 }

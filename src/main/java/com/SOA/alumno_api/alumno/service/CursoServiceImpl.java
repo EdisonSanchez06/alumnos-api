@@ -1,106 +1,58 @@
 package com.soa.alumno_api.alumno.service;
 
 import com.soa.alumno_api.alumno.dto.CursoCreateDTO;
-import com.soa.alumno_api.alumno.dto.CursoResponseDTO;
 import com.soa.alumno_api.alumno.dto.CursoUpdateDTO;
-import com.soa.alumno_api.alumno.entity.Alumno;
 import com.soa.alumno_api.alumno.entity.Curso;
-import com.soa.alumno_api.alumno.repo.AlumnoRepository;
 import com.soa.alumno_api.alumno.repo.CursoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class CursoServiceImpl implements CursoService {
 
-    private final CursoRepository cursoRepository;
-    private final AlumnoRepository alumnoRepository;
+    private final CursoRepository repo;
 
     @Override
-    public CursoResponseDTO crear(CursoCreateDTO dto) {
+    public List<Curso> listar() {
+        return repo.findAll();
+    }
 
-        Alumno alumno = alumnoRepository.findById(dto.getAlumnoCed())
-                .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
+    @Override
+    public Curso buscarPorId(Long id) {
+        return repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
+    }
 
-        Curso curso = Curso.builder()
+    @Override
+    public Curso crear(CursoCreateDTO dto) {
+        Curso c = Curso.builder()
                 .nombre(dto.getNombre())
-                .alumno(alumno)
+                .nivel(dto.getNivel())
+                .paralelo(dto.getParalelo())
                 .build();
 
-        return mapToDto(cursoRepository.save(curso));
+        return repo.save(c);
     }
 
     @Override
-    public CursoResponseDTO actualizar(Long id, CursoUpdateDTO dto) {
+    public Curso actualizar(Long id, CursoUpdateDTO dto) {
+        Curso c = buscarPorId(id);
 
-        Curso curso = cursoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
+        c.setNombre(dto.getNombre());
+        c.setNivel(dto.getNivel());
+        c.setParalelo(dto.getParalelo());
 
-        Alumno alumno = alumnoRepository.findById(dto.getAlumnoCed())
-                .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
-
-        curso.setNombre(dto.getNombre());
-        curso.setAlumno(alumno);
-
-        return mapToDto(cursoRepository.save(curso));
-    }
-
-    @Override
-    public List<CursoResponseDTO> listar() {
-        return cursoRepository.findAll()
-                .stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<CursoResponseDTO> listarPorAlumno(String alumnoCed) {
-        return cursoRepository.findByAlumnoEstCed(alumnoCed)
-                .stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public CursoResponseDTO obtener(Long id) {
-        Curso curso = cursoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
-
-        return mapToDto(curso);
+        return repo.save(c);
     }
 
     @Override
     public void eliminar(Long id) {
-        cursoRepository.deleteById(id);
-    }
+        if (!repo.existsById(id))
+            throw new RuntimeException("Curso no existe");
 
-    // NUEVO: asignar (o cambiar) el alumno de un curso existente
-    @Override
-    public CursoResponseDTO asignarAlumno(Long cursoId, String alumnoCed) {
-
-        Curso curso = cursoRepository.findById(cursoId)
-                .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
-
-        Alumno alumno = alumnoRepository.findById(alumnoCed)
-                .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
-
-        curso.setAlumno(alumno);
-
-        return mapToDto(cursoRepository.save(curso));
-    }
-
-    private CursoResponseDTO mapToDto(Curso curso) {
-        return CursoResponseDTO.builder()
-                .id(curso.getId())
-                .nombre(curso.getNombre())
-                .alumnoCed(curso.getAlumno().getEstCed())
-                .alumnoNombreCompleto(
-                        curso.getAlumno().getEstNom() + " " + curso.getAlumno().getEstApe()
-                )
-                .build();
+        repo.deleteById(id);
     }
 }

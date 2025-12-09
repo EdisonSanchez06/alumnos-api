@@ -2,24 +2,15 @@ package com.soa.alumno_api.alumno.service;
 
 import com.soa.alumno_api.alumno.dto.CursoCreateDTO;
 import com.soa.alumno_api.alumno.dto.CursoUpdateDTO;
-import com.soa.alumno_api.alumno.dto.CursoResponseDTO;
+import com.soa.alumno_api.alumno.entity.Curso;
 
 import java.util.List;
-
 public interface CursoService {
 
-    CursoResponseDTO crear(CursoCreateDTO dto);
-
-    CursoResponseDTO actualizar(Long id, CursoUpdateDTO dto);
-
-    List<CursoResponseDTO> listar();
-
-    List<CursoResponseDTO> listarPorAlumno(String alumnoCed);
-
-    CursoResponseDTO obtener(Long id);
-
+    List<Curso> listar();
+    Curso buscarPorId(Long id);
+    Curso crear(CursoCreateDTO dto);
+    Curso actualizar(Long id, CursoUpdateDTO dto);
     void eliminar(Long id);
-
-    // NUEVO: asignar (o cambiar) el alumno de un curso
-    CursoResponseDTO asignarAlumno(Long cursoId, String alumnoCed);
 }
+

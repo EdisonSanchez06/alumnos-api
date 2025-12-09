@@ -165,7 +165,13 @@ function validarTelefono(tel) {
 }
 
 function validarDireccion(dir) {
-  return dir.length >= 5;
+  return dir.trim().length >= 5;
+}
+
+// Validación de nombre de curso (una sola versión)
+function validarNombreCurso(nombre) {
+  // Letras, números y espacios, mínimo 3 caracteres
+  return /^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ]{3,40}$/.test(nombre);
 }
 
 function attachLiveValidation(form) {
@@ -187,6 +193,8 @@ function clearValidation(form) {
   form.querySelectorAll("input, textarea")
     .forEach(i => i.classList.remove("is-valid", "is-invalid"));
 }
+
+
 // ======================================================================
 // ========================= PAGINACIÓN / FILTROS =======================
 // ======================================================================
@@ -200,16 +208,16 @@ function applyAlumnosFilters() {
   let result = [...alumnosData];
 
   if (alumnosFilters.cedula)
-    result = result.filter(a => a.estCed.includes(alumnosFilters.cedula));
+    result = result.filter(a => (a.estCed || "").includes(alumnosFilters.cedula));
 
   if (alumnosFilters.nombre)
     result = result.filter(a =>
-      a.estNom.toLowerCase().includes(alumnosFilters.nombre.toLowerCase())
+      (a.estNom || "").toLowerCase().includes(alumnosFilters.nombre.toLowerCase())
     );
 
   if (alumnosFilters.apellido)
     result = result.filter(a =>
-      a.estApe.toLowerCase().includes(alumnosFilters.apellido.toLowerCase())
+      (a.estApe || "").toLowerCase().includes(alumnosFilters.apellido.toLowerCase())
     );
 
   if (alumnosSearch) {
@@ -229,11 +237,11 @@ function applyCursosFilters() {
 
   if (cursosFilters.nombre)
     result = result.filter(c =>
-      c.nombre.toLowerCase().includes(cursosFilters.nombre.toLowerCase())
+      (c.nombre || "").toLowerCase().includes(cursosFilters.nombre.toLowerCase())
     );
 
   if (cursosFilters.alumnoCed)
-    result = result.filter(c => c.alumnoCed.includes(cursosFilters.alumnoCed));
+    result = result.filter(c => (c.alumnoCed || "").includes(cursosFilters.alumnoCed));
 
   if (cursosSearch) {
     const q = cursosSearch.toLowerCase();
@@ -255,10 +263,12 @@ function applyCursosFilters() {
 async function fetchAlumnos() {
   try {
     const resp = await fetch(API_ALUMNOS, { headers: getHeaders() });
+    if (!resp.ok) throw new Error("Error al cargar alumnos");
     alumnosData = await resp.json();
     alumnosPage = 1;
     renderAlumnosTable();
-  } catch {
+  } catch (e) {
+    console.error(e);
     toast("Error al cargar alumnos", "error");
   }
 }
@@ -295,11 +305,17 @@ function renderAlumnosTable() {
     )
     .join("");
 
-  document.getElementById("alumnosPaginationInfo").textContent =
-    total ? `Mostrando ${items.length} de ${total}` : "Sin resultados";
+  const info = document.getElementById("alumnosPaginationInfo");
+  if (info) {
+    info.textContent = total
+      ? `Mostrando ${items.length} de ${total}`
+      : "Sin resultados";
+  }
 
-  document.getElementById("alumnosPrev").disabled = alumnosPage <= 1;
-  document.getElementById("alumnosNext").disabled = alumnosPage >= totalPages;
+  const btnPrev = document.getElementById("alumnosPrev");
+  const btnNext = document.getElementById("alumnosNext");
+  if (btnPrev) btnPrev.disabled = alumnosPage <= 1;
+  if (btnNext) btnNext.disabled = alumnosPage >= totalPages;
 }
 
 function alumnosCambioPagina(n) {
@@ -314,9 +330,14 @@ function alumnosCambioSearch(input) {
 }
 
 function alumnosCambioFiltros() {
-  alumnosFilters.cedula = document.getElementById("filterCedula").value.trim();
-  alumnosFilters.nombre = document.getElementById("filterNombre").value.trim();
-  alumnosFilters.apellido = document.getElementById("filterApellido").value.trim();
+  const ced = document.getElementById("filterCedula");
+  const nom = document.getElementById("filterNombre");
+  const ape = document.getElementById("filterApellido");
+
+  alumnosFilters.cedula = ced ? ced.value.trim() : "";
+  alumnosFilters.nombre = nom ? nom.value.trim() : "";
+  alumnosFilters.apellido = ape ? ape.value.trim() : "";
+
   alumnosPage = 1;
   renderAlumnosTable();
 }
@@ -349,7 +370,10 @@ async function crearAlumno(e) {
     estDir: f.estDir.value.trim(),
   };
 
-  // VALIDACIONES fuertes
+  if (!data.estCed || !data.estNom || !data.estApe || !data.estTel || !data.estDir) {
+    return toast("Todos los campos son obligatorios", "warning");
+  }
+
   if (!validarCedulaEcuatoriana(data.estCed))
     return toast("Cédula inválida", "error");
 
@@ -366,18 +390,21 @@ async function crearAlumno(e) {
     return toast("Dirección demasiado corta", "warning");
 
   try {
-    await fetch(API_ALUMNOS, {
+    const resp = await fetch(API_ALUMNOS, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
+
+    if (!resp.ok) throw new Error("Error al crear alumno");
 
     toast("Alumno creado correctamente", "success");
 
     bootstrap.Modal.getInstance(document.getElementById("modalCrearAlumno")).hide();
     fetchAlumnos();
 
-  } catch {
+  } catch (e) {
+    console.error(e);
     toast("Error al crear alumno", "error");
   }
 }
@@ -393,6 +420,8 @@ async function abrirModalEditarAlumno(ced) {
 
   try {
     const resp = await fetch(`${API_ALUMNOS}/${ced}`, { headers: getHeaders() });
+    if (!resp.ok) throw new Error("No se pudo cargar el alumno");
+
     const a = await resp.json();
 
     form.estCedE.value = a.estCed;
@@ -406,7 +435,8 @@ async function abrirModalEditarAlumno(ced) {
 
     modal.show();
 
-  } catch {
+  } catch (e) {
+    console.error(e);
     toast("No se pudo cargar alumno", "error");
   }
 }
@@ -424,7 +454,9 @@ async function actualizarAlumno(e) {
     estDir: f.estDirE.value.trim(),
   };
 
-  // VALIDACIONES
+  if (!data.estNom || !data.estApe || !data.estTel || !data.estDir)
+    return toast("Todos los campos son obligatorios", "warning");
+
   if (!validarNombre(data.estNom))
     return toast("Nombre inválido", "warning");
 
@@ -438,18 +470,21 @@ async function actualizarAlumno(e) {
     return toast("Dirección inválida", "warning");
 
   try {
-    await fetch(`${API_ALUMNOS}/${ced}`, {
+    const resp = await fetch(`${API_ALUMNOS}/${ced}`, {
       method: "PUT",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
+
+    if (!resp.ok) throw new Error("Error en actualización");
 
     toast("Alumno actualizado correctamente", "success");
 
     bootstrap.Modal.getInstance(document.getElementById("modalEditarAlumno")).hide();
     fetchAlumnos();
 
-  } catch {
+  } catch (e) {
+    console.error(e);
     toast("No se pudo actualizar", "error");
   }
 }
@@ -464,18 +499,23 @@ async function eliminarAlumno(ced) {
     return;
 
   try {
-    await fetch(`${API_ALUMNOS}/${ced}`, {
+    const resp = await fetch(`${API_ALUMNOS}/${ced}`, {
       method: "DELETE",
       headers: getHeaders(),
     });
 
+    if (!resp.ok) throw new Error("Error al eliminar");
+
     toast("Alumno eliminado", "success");
     fetchAlumnos();
 
-  } catch {
+  } catch (e) {
+    console.error(e);
     toast("Error eliminando alumno", "error");
   }
 }
+
+
 // ======================================================================
 // ========================= CRUD CURSOS ================================
 // ======================================================================
@@ -483,10 +523,12 @@ async function eliminarAlumno(ced) {
 async function fetchCursos() {
   try {
     const resp = await fetch(API_CURSOS, { headers: getHeaders() });
+    if (!resp.ok) throw new Error("Error al cargar cursos");
     cursosData = await resp.json();
     cursosPage = 1;
     renderCursosTable();
-  } catch {
+  } catch (e) {
+    console.error(e);
     toast("Error al cargar cursos", "error");
   }
 }
@@ -517,11 +559,17 @@ function renderCursosTable() {
     )
     .join("");
 
-  document.getElementById("cursosPaginationInfo").textContent =
-    total ? `Mostrando ${items.length} de ${total}` : "Sin resultados";
+  const info = document.getElementById("cursosPaginationInfo");
+  if (info) {
+    info.textContent = total
+      ? `Mostrando ${items.length} de ${total}`
+      : "Sin resultados";
+  }
 
-  document.getElementById("cursosPrev").disabled = cursosPage <= 1;
-  document.getElementById("cursosNext").disabled = cursosPage >= totalPages;
+  const btnPrev = document.getElementById("cursosPrev");
+  const btnNext = document.getElementById("cursosNext");
+  if (btnPrev) btnPrev.disabled = cursosPage <= 1;
+  if (btnNext) btnNext.disabled = cursosPage >= totalPages;
 }
 
 function cursosCambioPagina(n) {
@@ -536,8 +584,12 @@ function cursosCambioSearch(input) {
 }
 
 function cursosCambioFiltros() {
-  cursosFilters.nombre = document.getElementById("filterCursoNombre").value.trim();
-  cursosFilters.alumnoCed = document.getElementById("filterCursoAlumnoCed").value.trim();
+  const nom = document.getElementById("filterCursoNombre");
+  const ced = document.getElementById("filterCursoAlumnoCed");
+
+  cursosFilters.nombre = nom ? nom.value.trim() : "";
+  cursosFilters.alumnoCed = ced ? ced.value.trim() : "";
+
   cursosPage = 1;
   renderCursosTable();
 }
@@ -550,8 +602,10 @@ function cursosCambioFiltros() {
 async function cargarCedulas() {
   try {
     const resp = await fetch(API_ALUMNOS, { headers: getHeaders() });
+    if (!resp.ok) throw new Error("Error cargando alumnos para autocomplete");
     alumnosParaAutocomplete = await resp.json();
-  } catch {
+  } catch (e) {
+    console.error(e);
     toast("No se pudieron cargar cédulas", "error");
   }
 }
@@ -560,6 +614,8 @@ async function cargarCedulas() {
 function autocompletarCedula(inputId, listId) {
   const input = document.getElementById(inputId);
   const list = document.getElementById(listId);
+
+  if (!input || !list) return;
 
   input.addEventListener("input", () => {
     const val = input.value.trim().toLowerCase();
@@ -570,7 +626,7 @@ function autocompletarCedula(inputId, listId) {
     }
 
     const results = alumnosParaAutocomplete
-      .filter((a) => a.estCed.startsWith(val))
+      .filter((a) => (a.estCed || "").startsWith(val))
       .slice(0, 7);
 
     list.innerHTML = results
@@ -582,7 +638,7 @@ function autocompletarCedula(inputId, listId) {
       )
       .join("");
 
-    document.querySelectorAll(".ac-item").forEach((el) => {
+    list.querySelectorAll(".ac-item").forEach((el) => {
       el.onclick = () => {
         input.value = el.dataset.value;
         list.innerHTML = "";
@@ -591,40 +647,6 @@ function autocompletarCedula(inputId, listId) {
   });
 }
 
-
-// ======================================================================
-// ========================= VALIDACIONES CURSOS =========================
-// ======================================================================
-
-function validarNombreCurso(texto) {
-  return /^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ]{3,40}$/.test(texto);
-}
-
-function validarNombreCurso(nombre) {
-    const regex = /^[A-Za-zÁÉÍÓÚÑáéíóúñ ]{3,}$/;
-
-    if (!regex.test(nombre)) {
-        toast("El nombre del curso es inválido. Solo letras y mínimo 3 caracteres.", "warning");
-        return false;
-    }
-
-    // Opcional: lista sugerida de materias reales
-    const materiasValidas = [
-        "Matemáticas", "Lenguaje", "Ciencias", "Historia", "Inglés",
-        "Física", "Química", "Biología", "Geografía", "Computación"
-    ];
-
-    const coincide = materiasValidas.some(m =>
-        m.toLowerCase() === nombre.toLowerCase()
-    );
-
-    if (!coincide) {
-        toast("Materia no reconocida. Solo materias reales.", "warning");
-        return false;
-    }
-
-    return true;
-}
 
 // ======================================================================
 // ========================= CREAR CURSO ================================
@@ -650,27 +672,31 @@ async function crearCurso(e) {
     alumnoCed: f.alumnoCed.value.trim(),
   };
 
-  if (!validarNombreCurso(data.nombre)) 
+  if (!data.nombre || !data.alumnoCed) {
     return toast("Todos los campos son obligatorios", "warning");
+  }
 
   if (!validarNombreCurso(data.nombre))
-    return toast("El nombre del curso no es válido", "error");
+    return toast("El nombre del curso no es válido", "warning");
 
   if (!validarCedulaEcuatoriana(data.alumnoCed))
-    return toast("La cédula no es válida", "error");
+    return toast("La cédula no es válida", "warning");
 
   try {
-    await fetch(API_CURSOS, {
+    const resp = await fetch(API_CURSOS, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
 
+    if (!resp.ok) throw new Error("Error al crear curso");
+
     toast("Curso creado correctamente", "success");
     bootstrap.Modal.getInstance(document.getElementById("modalCrearCurso")).hide();
     fetchCursos();
 
-  } catch {
+  } catch (e) {
+    console.error(e);
     toast("Error al crear curso", "error");
   }
 }
@@ -686,6 +712,8 @@ async function abrirModalEditarCurso(id) {
 
   try {
     const resp = await fetch(`${API_CURSOS}/${id}`, { headers: getHeaders() });
+    if (!resp.ok) throw new Error("Error al cargar curso");
+
     const c = await resp.json();
 
     form.idE.value = c.id;
@@ -697,7 +725,8 @@ async function abrirModalEditarCurso(id) {
 
     modal.show();
 
-  } catch {
+  } catch (e) {
+    console.error(e);
     toast("Error al cargar curso", "error");
   }
 }
@@ -711,25 +740,31 @@ async function actualizarCurso(e) {
     alumnoCed: f.alumnoCedE.value.trim(),
   };
 
-  if (!validarNombreCurso(data.nombre))
+  if (!data.nombre || !data.alumnoCed) {
+    return toast("Todos los campos son obligatorios", "warning");
+  }
 
+  if (!validarNombreCurso(data.nombre))
     return toast("Nombre del curso no válido", "warning");
 
   if (!validarCedulaEcuatoriana(data.alumnoCed))
     return toast("Cédula inválida", "warning");
 
   try {
-    await fetch(`${API_CURSOS}/${f.idE.value}`, {
+    const resp = await fetch(`${API_CURSOS}/${f.idE.value}`, {
       method: "PUT",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
 
+    if (!resp.ok) throw new Error("Error al actualizar curso");
+
     toast("Curso actualizado correctamente", "success");
     bootstrap.Modal.getInstance(document.getElementById("modalEditarCurso")).hide();
     fetchCursos();
 
-  } catch {
+  } catch (e) {
+    console.error(e);
     toast("Error al actualizar curso", "error");
   }
 }
@@ -743,18 +778,23 @@ async function eliminarCurso(id) {
   if (!(await confirmDialog("Eliminar curso", `¿Eliminar el curso ${id}?`))) return;
 
   try {
-    await fetch(`${API_CURSOS}/${id}`, {
+    const resp = await fetch(`${API_CURSOS}/${id}`, {
       method: "DELETE",
       headers: getHeaders(),
     });
 
+    if (!resp.ok) throw new Error("Error al eliminar curso");
+
     toast("Curso eliminado", "success");
     fetchCursos();
 
-  } catch {
+  } catch (e) {
+    console.error(e);
     toast("Error al eliminar curso", "error");
   }
 }
+
+
 // ======================================================================
 // ========================= DASHBOARD ==================================
 // ======================================================================
@@ -778,21 +818,24 @@ async function initDashboard() {
     // ====================
     //  TOTALES
     // ====================
-    document.getElementById("totalAlumnos").textContent = alumnos.length;
-    document.getElementById("totalCursos").textContent = cursos.length;
-    document.getElementById("userName").textContent =
+    const totalAlumnosSpan = document.getElementById("totalAlumnos");
+    const totalCursosSpan = document.getElementById("totalCursos");
+    const userNameSpan = document.getElementById("userName");
+
+    if (totalAlumnosSpan) totalAlumnosSpan.textContent = alumnos.length;
+    if (totalCursosSpan) totalCursosSpan.textContent = cursos.length;
+    if (userNameSpan) userNameSpan.textContent =
       localStorage.getItem("username") || "ADMIN";
 
     // ================================
     //  ULTIMOS 5 ALUMNOS REGISTRADOS
     // ================================
     const ultimos = alumnos.slice(-5); // si luego agregas fecha, aquí se ordena por fecha
-
     const tbody = document.getElementById("tbodyUltimos");
+
     if (tbody) {
       tbody.innerHTML = ultimos
         .map((a) => {
-          // Buscar curso del alumno (si tiene)
           const cursoAlumno = cursos.find((c) => c.alumnoCed === a.estCed);
           return `
             <tr>
@@ -830,7 +873,8 @@ async function initDashboard() {
     const cursosUnicosConteo = {};
 
     cursos.forEach((c) => {
-      const nombre = c.nombre.trim().toLowerCase();
+      const nombre = (c.nombre || "").trim().toLowerCase();
+      if (!nombre) return;
       cursosUnicosConteo[nombre] = (cursosUnicosConteo[nombre] || 0) + 1;
     });
 
@@ -898,46 +942,41 @@ async function initDashboard() {
     toast("Error cargando dashboard", "error");
   }
 }
- // ======================================================================
- // ========================= INIT PAGES (FINAL) ==========================
- // ======================================================================
 
- function initAlumnosPage() {
-   loadTheme();
-   ensureAuth();
-   fetchAlumnos();
 
-   // Mostrar nombre usuario en navbar
-   const navUser = document.getElementById("userNameNav");
-   if (navUser) navUser.textContent = localStorage.getItem("username") || "";
- }
+// ======================================================================
+// ========================= INIT PAGES (FINAL) ==========================
+// ======================================================================
 
- async function initCursosPage() {
-   loadTheme();
-   ensureAdmin();
+function initAlumnosPage() {
+  loadTheme();
+  ensureAuth();
+  fetchAlumnos();
 
-   //  cargar alumnos para autocompletar
-   await cargarCedulas();
+  const navUser = document.getElementById("userNameNav");
+  if (navUser) navUser.textContent = localStorage.getItem("username") || "";
+}
 
-   // activar autocompletar en el input de crear curso
-   autocompletarCedula("alumnoCed", "listaCedulas");
+async function initCursosPage() {
+  loadTheme();
+  ensureAdmin();
 
-   //  cargar cursos al iniciar
-   fetchCursos();
+  await cargarCedulas();
+  autocompletarCedula("alumnoCed", "listaCedulas");
+  fetchCursos();
 
-   // Mostrar nombre usuario en navbar
-   const navUser = document.getElementById("userNameNav");
-   if (navUser) navUser.textContent = localStorage.getItem("username") || "ADMIN";
- }
+  const navUser = document.getElementById("userNameNav");
+  if (navUser) navUser.textContent = localStorage.getItem("username") || "ADMIN";
+}
 
- function initDashboardPage() {
-   loadTheme();
-   ensureAdmin();
-   initDashboard();
- }
+function initDashboardPage() {
+  loadTheme();
+  ensureAdmin();
+  initDashboard();
+}
 
- // ======================================================================
- // ========================= FIN DEL ARCHIVO ============================
- // ======================================================================
+// ======================================================================
+// ========================= FIN DEL ARCHIVO ============================
+// ======================================================================
 
- console.log("app.js cargado correctamente ✔️");
+console.log("app.js cargado correctamente ✔️");

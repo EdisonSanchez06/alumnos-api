@@ -7,112 +7,98 @@
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Icons -->
+
+    <!-- Íconos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <!-- SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- Custom Styles -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
-<body onload="initDashboard()">
+<body onload="initDashboardPage()">
 
-<!-- ===========================================================
+<!-- =========================================================
                         NAVBAR
-=========================================================== -->
+========================================================= -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm py-2">
     <div class="container-fluid">
 
-        <a class="navbar-brand fw-semibold" href="dashboard.html">
-            <i class="bi bi-bar-chart-fill me-1"></i> Dashboard
+        <a class="navbar-brand fw-bold" href="index.html">
+            <i class="bi bi-speedometer2 me-1"></i> Dashboard
         </a>
 
         <span class="text-light small me-auto">
-            Bienvenido: <b id="userName"></b>
+            Usuario: <b id="userNameNav"></b>
         </span>
 
-        <div class="d-flex align-items-center">
+        <ul class="navbar-nav me-3">
+            <li class="nav-item"><a class="nav-link" href="alumnos.html"><i class="bi bi-people-fill me-1"></i>Alumnos</a></li>
+            <li class="nav-item"><a class="nav-link" href="cursos.html"><i class="bi bi-journal-code me-1"></i>Cursos</a></li>
+        </ul>
 
-            <ul class="navbar-nav me-3 only-admin">
-                <li class="nav-item">
-                    <a class="nav-link" href="alumnos.html">
-                        <i class="bi bi-people-fill me-1"></i> Alumnos
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="cursos.html">
-                        <i class="bi bi-journal-code me-1"></i> Cursos
-                    </a>
-                </li>
-            </ul>
+        <button class="btn btn-light btn-sm me-2" onclick="toggleTheme()">
+            <i class="bi bi-moon-stars"></i>
+        </button>
 
-            <button class="btn btn-light btn-sm me-2" onclick="toggleTheme()">
-                <i class="bi bi-moon-stars"></i>
-            </button>
-
-            <button class="btn btn-danger btn-sm" onclick="logout()">
-                <i class="bi bi-box-arrow-right me-1"></i> Salir
-            </button>
-
-        </div>
+        <button class="btn btn-danger btn-sm" onclick="logout()">
+            <i class="bi bi-box-arrow-right me-1"></i>Salir
+        </button>
     </div>
 </nav>
 
-<!-- ===========================================================
-                      CONTENIDO PRINCIPAL
-=========================================================== -->
+
+
+<!-- =========================================================
+                        CONTENIDO
+========================================================= -->
 <div class="container mt-4">
 
-    <!-- ===== TARJETAS RESUMEN ===== -->
+    <!-- TARJETAS -->
     <div class="row g-3 mb-4">
 
         <div class="col-md-4">
-            <div class="card shadow-sm text-center p-3">
-                <h4 class="fw-bold" id="totalAlumnos">0</h4>
-                <p class="text-muted">Alumnos registrados</p>
+            <div class="card card-body shadow-sm text-center bg-success text-white">
+                <h4>Total Alumnos</h4>
+                <h2 id="totalAlumnos">0</h2>
             </div>
         </div>
 
         <div class="col-md-4">
-            <div class="card shadow-sm text-center p-3">
-                <h4 class="fw-bold" id="totalCursos">0</h4>
-                <p class="text-muted">Cursos registrados</p>
+            <div class="card card-body shadow-sm text-center bg-primary text-white">
+                <h4>Total Cursos</h4>
+                <h2 id="totalCursos">0</h2>
             </div>
         </div>
 
         <div class="col-md-4">
-            <div class="card shadow-sm text-center p-3">
-                <h4 class="fw-bold" id="totalCursosUnicos">0</h4>
-                <p class="text-muted">Cursos únicos registrados</p>
+            <div class="card card-body shadow-sm text-center bg-dark text-white">
+                <h4>Usuario</h4>
+                <h2 id="userName">ADMIN</h2>
             </div>
         </div>
 
     </div>
 
-    <!-- ===== GRÁFICO TOP 10 ===== -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-primary text-white">
-            <i class="bi bi-graph-up"></i> Cursos por Alumno (TOP 10)
-        </div>
-        <div class="card-body">
-            <canvas id="chartCursosPorAlumno" height="130"></canvas>
-        </div>
-    </div>
 
-    <!-- ===== ÚLTIMOS ALUMNOS ===== -->
+
+    <!-- ÚLTIMOS ALUMNOS -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-secondary text-white">
-            <i class="bi bi-clock-history"></i> Últimos alumnos registrados
+            <i class="bi bi-clock-history me-1"></i> Últimos alumnos registrados
         </div>
 
         <div class="table-responsive">
-            <table class="table table-hover m-0">
+            <table class="table table-striped m-0">
                 <thead class="table-dark">
                 <tr>
                     <th>Cédula</th>
                     <th>Nombre</th>
-                    <th>Curso actual</th>
+                    <th>Curso Asignado</th>
                 </tr>
                 </thead>
 
@@ -121,20 +107,49 @@
         </div>
     </div>
 
+
+
+    <!-- GRÁFICOS -->
+    <div class="row g-4">
+
+        <!-- Cursos por Nivel -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-bar-chart-line me-1"></i> Cursos por nivel
+                </div>
+                <div class="card-body">
+                    <canvas id="chartCursosPorNivel" height="180"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cursos por Paralelo -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning">
+                    <i class="bi bi-diagram-3 me-1"></i> Cursos por paralelo
+                </div>
+                <div class="card-body">
+                    <canvas id="chartCursosPorParalelo" height="180"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
 </div>
 
-<!-- SCRIPTS -->
+
+
+<!-- =========================================================
+                        SCRIPTS
+========================================================= -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="js/app.js"></script>
 
 <script>
-    // Ocultar botones si no es Admin
-    if (localStorage.getItem("role") !== "ADMIN") {
-        document.querySelectorAll(".only-admin").forEach(x => x.classList.add("d-none"));
-    }
-
-    document.getElementById("userName").textContent =
+    document.getElementById("userNameNav").textContent =
         localStorage.getItem("username") || "ADMIN";
 </script>
 

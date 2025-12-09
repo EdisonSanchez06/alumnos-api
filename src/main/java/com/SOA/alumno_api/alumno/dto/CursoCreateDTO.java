@@ -9,7 +9,12 @@ import jakarta.validation.constraints.NotNull;
 @AllArgsConstructor
 @Builder
 public class CursoCreateDTO {
+    @NotBlank
     private String nombre;
-    private String alumnoCed; // aquí recibimos la cedula
-}
 
+    @NotBlank
+    private String nivel;
+
+    @NotBlank
+    private String paralelo;
+}

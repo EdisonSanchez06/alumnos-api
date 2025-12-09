@@ -9,10 +9,13 @@ import jakarta.validation.constraints.NotNull;
 @AllArgsConstructor
 @Builder
 public class CursoUpdateDTO {
-
-    @NotBlank(message = "El nombre del curso es obligatorio")
+    @NotBlank
     private String nombre;
 
-    @NotNull(message = "La cedula del alumno es obligatorio")
-    private String alumnoCed;
+    @NotBlank
+    private String nivel;
+
+    @NotBlank
+    private String paralelo;
 }
+

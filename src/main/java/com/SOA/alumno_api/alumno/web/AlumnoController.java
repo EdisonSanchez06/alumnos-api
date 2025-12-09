@@ -3,60 +3,65 @@ package com.soa.alumno_api.alumno.web;
 import com.soa.alumno_api.alumno.dto.AlumnoCreateDto;
 import com.soa.alumno_api.alumno.dto.AlumnoUpdateDto;
 import com.soa.alumno_api.alumno.entity.Alumno;
+import com.soa.alumno_api.alumno.entity.Curso;
 import com.soa.alumno_api.alumno.service.AlumnoService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 @RestController
 @RequestMapping("/api/alumnos")
+@RequiredArgsConstructor
 @CrossOrigin(origins = {"*"})
 public class AlumnoController {
 
     private final AlumnoService service;
 
-    public AlumnoController(AlumnoService service) {
-        this.service = service;
-    }
-
-    // GET /api/alumnos
     @GetMapping
     public List<Alumno> listar() {
         return service.listar();
     }
 
-    // GET /api/alumnos/{ced}
-    @GetMapping("/{ced}")
-    public Alumno porCedula(@PathVariable String ced) {
-        return service.porCedula(ced);
+    @GetMapping("/{cedula}")
+    public Alumno obtener(@PathVariable String cedula) {
+        return service.buscarPorCedula(cedula);
     }
 
-    // POST /api/alumnos
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Alumno crear(@Valid @RequestBody AlumnoCreateDto dto) {
         return service.crear(dto);
     }
 
-    // PUT /api/alumnos/{ced}
-    @PutMapping("/{ced}")
-    public Alumno actualizar(@PathVariable String ced, @Valid @RequestBody AlumnoUpdateDto dto) {
-        return service.actualizar(ced, dto);
+    @PutMapping("/{cedula}")
+    public Alumno actualizar(@PathVariable String cedula,
+                             @Valid @RequestBody AlumnoUpdateDto dto) {
+        return service.actualizar(cedula, dto);
     }
 
-    // DELETE /api/alumnos/{ced}
-    @DeleteMapping("/{ced}")
+    @DeleteMapping("/{cedula}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminar(@PathVariable String ced) {
-        service.eliminar(ced);
+    public void eliminar(@PathVariable String cedula) {
+        service.eliminar(cedula);
     }
 
-    // NUEVO: todos los alumnos que pertenecen a un curso
-    // GET /api/alumnos/curso/{cursoId}
+    // ===================== ENDPOINTS NUEVOS =====================
+
+    @PutMapping("/{cedula}/curso/{cursoId}")
+    public Alumno asignarCurso(@PathVariable String cedula,
+                               @PathVariable Long cursoId) {
+        return service.asignarCurso(cedula, cursoId);
+    }
+
     @GetMapping("/curso/{cursoId}")
-    public List<Alumno> alumnosPorCurso(@PathVariable Long cursoId) {
-        return service.listarPorCurso(cursoId);
+    public List<Alumno> alumnosDeCurso(@PathVariable Long cursoId) {
+        return service.obtenerAlumnosPorCurso(cursoId);
+    }
+
+    @GetMapping("/{cedula}/curso")
+    public Curso cursoDeAlumno(@PathVariable String cedula) {
+        return service.obtenerCursoDeAlumno(cedula);
     }
 }
