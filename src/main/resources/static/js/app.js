@@ -19,7 +19,8 @@ let cursosPageSize = 5;
 let cursosSearch = "";
 let cursosFilters = { nombre: "", alumnoCed: "" };
 
-let alumnosParaAutocomplete = []; // para autocompletar
+let alumnosParaAutocomplete = []; // sirve para autocompletar cedulas
+
 
 // ======================================================================
 // ========================= UTILIDADES BASICAS =========================
@@ -49,24 +50,25 @@ function toast(message, icon = "info") {
     toast: true,
     icon,
     title: message,
-    timer: 2000,
-    showConfirmButton: false,
+    timer: 1800,
     position: "top-end",
+    showConfirmButton: false,
   });
 }
 
 async function confirmDialog(title, text) {
-  const result = await Swal.fire({
+  const res = await Swal.fire({
     title,
     text,
     icon: "warning",
     showCancelButton: true,
-    confirmButtonColor: "#d33",
     confirmButtonText: "Sí",
     cancelButtonText: "Cancelar",
+    confirmButtonColor: "#d33",
   });
-  return result.isConfirmed;
+  return res.isConfirmed;
 }
+
 
 // ======================================================================
 // ========================= AUTH / ROLES ===============================
@@ -84,6 +86,7 @@ async function login(e) {
 
   try {
     const resp = await fetch(API_ALUMNOS, { headers: { Authorization: basic } });
+
     if (!resp.ok) throw new Error("Usuario o contraseña incorrectos");
 
     localStorage.setItem("auth", basic);
@@ -92,8 +95,10 @@ async function login(e) {
     let role = user.toLowerCase() === "admin" ? "ADMIN" : "SECRETARIA";
     localStorage.setItem("role", role);
 
-    toast(`Bienvenido ${user}`, "success");
-    location.href = role === "ADMIN" ? "dashboard.html" : "alumnos.html";
+    toast("Bienvenido " + user, "success");
+
+    if (role === "ADMIN") location.href = "dashboard.html";
+    else location.href = "alumnos.html";
 
   } catch (err) {
     toast(err.message, "error");
@@ -116,14 +121,52 @@ function ensureAuth() {
 function ensureAdmin() {
   ensureAuth();
   if (getRole() !== "ADMIN") {
-    toast("Solo admins pueden acceder aquí", "error");
-    setTimeout(() => location.href = "alumnos.html", 1500);
+    toast("Solo el administrador puede acceder aquí", "error");
+    setTimeout(() => (location.href = "alumnos.html"), 1500);
   }
 }
 
+
 // ======================================================================
-// ========================= VALIDACIÓN ================================
+// ========================= VALIDACIONES ===============================
 // ======================================================================
+
+// Validar cédula ecuatoriana
+function validarCedulaEcuatoriana(ced) {
+  if (!/^\d{10}$/.test(ced)) return false;
+
+  const provincia = parseInt(ced.substring(0, 2), 10);
+  if (provincia < 1 || provincia > 24) return false;
+
+  const digitoVerificador = parseInt(ced[9]);
+  let suma = 0;
+
+  for (let i = 0; i < 9; i++) {
+    let valor = parseInt(ced[i]);
+    if (i % 2 === 0) {
+      valor *= 2;
+      if (valor > 9) valor -= 9;
+    }
+    suma += valor;
+  }
+
+  const decenaSuperior = Math.ceil(suma / 10) * 10;
+  const digitoCalculado = decenaSuperior - suma;
+
+  return (digitoCalculado === digitoVerificador) || (digitoCalculado === 10 && digitoVerificador === 0);
+}
+
+function validarNombre(nombre) {
+  return /^[A-Za-zÁÉÍÓÚÑáéíóúñ ]{2,40}$/.test(nombre);
+}
+
+function validarTelefono(tel) {
+  return /^\d{10}$/.test(tel);
+}
+
+function validarDireccion(dir) {
+  return dir.length >= 5;
+}
 
 function attachLiveValidation(form) {
   const inputs = form.querySelectorAll("input[required], textarea[required]");
@@ -144,7 +187,6 @@ function clearValidation(form) {
   form.querySelectorAll("input, textarea")
     .forEach(i => i.classList.remove("is-valid", "is-invalid"));
 }
-
 // ======================================================================
 // ========================= PAGINACIÓN / FILTROS =======================
 // ======================================================================
@@ -161,15 +203,21 @@ function applyAlumnosFilters() {
     result = result.filter(a => a.estCed.includes(alumnosFilters.cedula));
 
   if (alumnosFilters.nombre)
-    result = result.filter(a => a.estNom.toLowerCase().includes(alumnosFilters.nombre.toLowerCase()));
+    result = result.filter(a =>
+      a.estNom.toLowerCase().includes(alumnosFilters.nombre.toLowerCase())
+    );
 
   if (alumnosFilters.apellido)
-    result = result.filter(a => a.estApe.toLowerCase().includes(alumnosFilters.apellido.toLowerCase()));
+    result = result.filter(a =>
+      a.estApe.toLowerCase().includes(alumnosFilters.apellido.toLowerCase())
+    );
 
   if (alumnosSearch) {
     const q = alumnosSearch.toLowerCase();
     result = result.filter(a =>
-      `${a.estCed} ${a.estNom} ${a.estApe} ${a.estTel} ${a.estDir}`.toLowerCase().includes(q)
+      `${a.estCed} ${a.estNom} ${a.estApe} ${a.estTel} ${a.estDir}`
+        .toLowerCase()
+        .includes(q)
     );
   }
 
@@ -180,7 +228,9 @@ function applyCursosFilters() {
   let result = [...cursosData];
 
   if (cursosFilters.nombre)
-    result = result.filter(c => c.nombre.toLowerCase().includes(cursosFilters.nombre.toLowerCase()));
+    result = result.filter(c =>
+      c.nombre.toLowerCase().includes(cursosFilters.nombre.toLowerCase())
+    );
 
   if (cursosFilters.alumnoCed)
     result = result.filter(c => c.alumnoCed.includes(cursosFilters.alumnoCed));
@@ -188,12 +238,15 @@ function applyCursosFilters() {
   if (cursosSearch) {
     const q = cursosSearch.toLowerCase();
     result = result.filter(c =>
-      `${c.id} ${c.nombre} ${c.alumnoCed} ${c.alumnoNombreCompleto}`.toLowerCase().includes(q)
+      `${c.id} ${c.nombre} ${c.alumnoCed} ${c.alumnoNombreCompleto}`
+        .toLowerCase()
+        .includes(q)
     );
   }
 
   return result;
 }
+
 
 // ======================================================================
 // ========================= CRUD ALUMNOS ===============================
@@ -222,7 +275,9 @@ function renderAlumnosTable() {
 
   const items = paginate(filtered, alumnosPage, alumnosPageSize);
 
-  tbody.innerHTML = items.map(a => `
+  tbody.innerHTML = items
+    .map(
+      a => `
     <tr>
       <td>${a.estCed}</td>
       <td>${a.estNom}</td>
@@ -230,11 +285,15 @@ function renderAlumnosTable() {
       <td>${a.estTel || ""}</td>
       <td>${a.estDir || ""}</td>
       <td class="text-center">
-        <button class="btn btn-warning btn-sm me-1" onclick="abrirModalEditarAlumno('${a.estCed}')">Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="eliminarAlumno('${a.estCed}')">Eliminar</button>
+        <button class="btn btn-warning btn-sm me-1"
+          onclick="abrirModalEditarAlumno('${a.estCed}')">Editar</button>
+        <button class="btn btn-danger btn-sm"
+          onclick="eliminarAlumno('${a.estCed}')">Eliminar</button>
       </td>
     </tr>
-  `).join("");
+  `
+    )
+    .join("");
 
   document.getElementById("alumnosPaginationInfo").textContent =
     total ? `Mostrando ${items.length} de ${total}` : "Sin resultados";
@@ -262,13 +321,19 @@ function alumnosCambioFiltros() {
   renderAlumnosTable();
 }
 
-// Crear alumno
+
+// ======================================================================
+// ========================= CREAR ALUMNO ===============================
+// ======================================================================
+
 function abrirModalCrearAlumno() {
   const modal = new bootstrap.Modal("#modalCrearAlumno");
   const form = document.getElementById("formCrearAlumno");
+
   form.reset();
   clearValidation(form);
   attachLiveValidation(form);
+
   modal.show();
 }
 
@@ -284,8 +349,21 @@ async function crearAlumno(e) {
     estDir: f.estDir.value.trim(),
   };
 
-  if (!data.estCed || !data.estNom || !data.estApe)
-    return toast("Cédula, nombre y apellido son obligatorios", "warning");
+  // VALIDACIONES fuertes
+  if (!validarCedulaEcuatoriana(data.estCed))
+    return toast("Cédula inválida", "error");
+
+  if (!validarNombre(data.estNom))
+    return toast("Nombre inválido (solo letras)", "warning");
+
+  if (!validarNombre(data.estApe))
+    return toast("Apellido inválido (solo letras)", "warning");
+
+  if (!validarTelefono(data.estTel))
+    return toast("Teléfono inválido (10 dígitos)", "warning");
+
+  if (!validarDireccion(data.estDir))
+    return toast("Dirección demasiado corta", "warning");
 
   try {
     await fetch(API_ALUMNOS, {
@@ -293,15 +371,22 @@ async function crearAlumno(e) {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    toast("Alumno creado", "success");
+
+    toast("Alumno creado correctamente", "success");
+
     bootstrap.Modal.getInstance(document.getElementById("modalCrearAlumno")).hide();
     fetchAlumnos();
+
   } catch {
     toast("Error al crear alumno", "error");
   }
 }
 
-// Editar alumno
+
+// ======================================================================
+// ========================= EDITAR ALUMNO ===============================
+// ======================================================================
+
 async function abrirModalEditarAlumno(ced) {
   const modal = new bootstrap.Modal("#modalEditarAlumno");
   const form = document.getElementById("formEditarAlumno");
@@ -320,8 +405,9 @@ async function abrirModalEditarAlumno(ced) {
     attachLiveValidation(form);
 
     modal.show();
+
   } catch {
-    toast("Error al cargar alumno", "error");
+    toast("No se pudo cargar alumno", "error");
   }
 }
 
@@ -330,12 +416,26 @@ async function actualizarAlumno(e) {
   const f = e.target;
 
   const ced = f.estCedE.value;
+
   const data = {
     estNom: f.estNomE.value.trim(),
     estApe: f.estApeE.value.trim(),
     estTel: f.estTelE.value.trim(),
     estDir: f.estDirE.value.trim(),
   };
+
+  // VALIDACIONES
+  if (!validarNombre(data.estNom))
+    return toast("Nombre inválido", "warning");
+
+  if (!validarNombre(data.estApe))
+    return toast("Apellido inválido", "warning");
+
+  if (!validarTelefono(data.estTel))
+    return toast("Teléfono inválido", "warning");
+
+  if (!validarDireccion(data.estDir))
+    return toast("Dirección inválida", "warning");
 
   try {
     await fetch(`${API_ALUMNOS}/${ced}`, {
@@ -344,17 +444,24 @@ async function actualizarAlumno(e) {
       body: JSON.stringify(data),
     });
 
-    toast("Alumno actualizado", "success");
+    toast("Alumno actualizado correctamente", "success");
+
     bootstrap.Modal.getInstance(document.getElementById("modalEditarAlumno")).hide();
     fetchAlumnos();
+
   } catch {
-    toast("Error al actualizar alumno", "error");
+    toast("No se pudo actualizar", "error");
   }
 }
 
-// Eliminar alumno
+
+// ======================================================================
+// ========================= ELIMINAR ALUMNO ============================
+// ======================================================================
+
 async function eliminarAlumno(ced) {
-  if (!(await confirmDialog("Eliminar alumno", `¿Eliminar a ${ced}?`))) return;
+  if (!(await confirmDialog("Eliminar alumno", `¿Eliminar al alumno ${ced}?`)))
+    return;
 
   try {
     await fetch(`${API_ALUMNOS}/${ced}`, {
@@ -364,11 +471,11 @@ async function eliminarAlumno(ced) {
 
     toast("Alumno eliminado", "success");
     fetchAlumnos();
+
   } catch {
-    toast("No se pudo eliminar", "error");
+    toast("Error eliminando alumno", "error");
   }
 }
-
 // ======================================================================
 // ========================= CRUD CURSOS ================================
 // ======================================================================
@@ -397,7 +504,7 @@ function renderCursosTable() {
 
   tbody.innerHTML = items
     .map(
-      c => `
+      (c) => `
     <tr>
       <td>${c.id}</td>
       <td>${c.nombre}</td>
@@ -417,7 +524,28 @@ function renderCursosTable() {
   document.getElementById("cursosNext").disabled = cursosPage >= totalPages;
 }
 
-// ====== AUTOCOMPLETE: cargar alumnos ======
+function cursosCambioPagina(n) {
+  cursosPage += n;
+  renderCursosTable();
+}
+
+function cursosCambioSearch(input) {
+  cursosSearch = input.value.trim();
+  cursosPage = 1;
+  renderCursosTable();
+}
+
+function cursosCambioFiltros() {
+  cursosFilters.nombre = document.getElementById("filterCursoNombre").value.trim();
+  cursosFilters.alumnoCed = document.getElementById("filterCursoAlumnoCed").value.trim();
+  cursosPage = 1;
+  renderCursosTable();
+}
+
+
+// ======================================================================
+// ========================= AUTOCOMPLETE CÉDULA ========================
+// ======================================================================
 
 async function cargarCedulas() {
   try {
@@ -428,27 +556,33 @@ async function cargarCedulas() {
   }
 }
 
-// Autocomplete PRO
+
 function autocompletarCedula(inputId, listId) {
   const input = document.getElementById(inputId);
   const list = document.getElementById(listId);
 
   input.addEventListener("input", () => {
     const val = input.value.trim().toLowerCase();
+
     if (!val) {
       list.innerHTML = "";
       return;
     }
 
-    const filtrados = alumnosParaAutocomplete
-      .filter(a => a.estCed.startsWith(val))
-      .slice(0, 8);
+    const results = alumnosParaAutocomplete
+      .filter((a) => a.estCed.startsWith(val))
+      .slice(0, 7);
 
-    list.innerHTML = filtrados
-      .map(a => `<div class="ac-item" data-value="${a.estCed}">${a.estCed} — ${a.estNom} ${a.estApe}</div>`)
+    list.innerHTML = results
+      .map(
+        (a) => `
+        <div class="ac-item" data-value="${a.estCed}">
+            ${a.estCed} — ${a.estNom} ${a.estApe}
+        </div>`
+      )
       .join("");
 
-    document.querySelectorAll(".ac-item").forEach(el => {
+    document.querySelectorAll(".ac-item").forEach((el) => {
       el.onclick = () => {
         input.value = el.dataset.value;
         list.innerHTML = "";
@@ -457,13 +591,28 @@ function autocompletarCedula(inputId, listId) {
   });
 }
 
-// Crear curso
+
+// ======================================================================
+// ========================= VALIDACIONES CURSOS =========================
+// ======================================================================
+
+function validarNombreCurso(texto) {
+  return /^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ]{3,40}$/.test(texto);
+}
+
+
+// ======================================================================
+// ========================= CREAR CURSO ================================
+// ======================================================================
+
 function abrirModalCrearCurso() {
   const modal = new bootstrap.Modal("#modalCrearCurso");
   const form = document.getElementById("formCrearCurso");
+
   form.reset();
   clearValidation(form);
   attachLiveValidation(form);
+
   modal.show();
 }
 
@@ -479,6 +628,12 @@ async function crearCurso(e) {
   if (!data.nombre || !data.alumnoCed)
     return toast("Todos los campos son obligatorios", "warning");
 
+  if (!validarNombreCurso(data.nombre))
+    return toast("El nombre del curso no es válido", "error");
+
+  if (!validarCedulaEcuatoriana(data.alumnoCed))
+    return toast("La cédula no es válida", "error");
+
   try {
     await fetch(API_CURSOS, {
       method: "POST",
@@ -486,15 +641,20 @@ async function crearCurso(e) {
       body: JSON.stringify(data),
     });
 
-    toast("Curso creado", "success");
+    toast("Curso creado correctamente", "success");
     bootstrap.Modal.getInstance(document.getElementById("modalCrearCurso")).hide();
     fetchCursos();
+
   } catch {
     toast("Error al crear curso", "error");
   }
 }
 
-// Editar curso
+
+// ======================================================================
+// ========================= EDITAR CURSO ===============================
+// ======================================================================
+
 async function abrirModalEditarCurso(id) {
   const modal = new bootstrap.Modal("#modalEditarCurso");
   const form = document.getElementById("formEditarCurso");
@@ -511,6 +671,7 @@ async function abrirModalEditarCurso(id) {
     attachLiveValidation(form);
 
     modal.show();
+
   } catch {
     toast("Error al cargar curso", "error");
   }
@@ -525,6 +686,12 @@ async function actualizarCurso(e) {
     alumnoCed: f.alumnoCedE.value.trim(),
   };
 
+  if (!validarNombreCurso(data.nombre))
+    return toast("Nombre del curso no válido", "warning");
+
+  if (!validarCedulaEcuatoriana(data.alumnoCed))
+    return toast("Cédula inválida", "warning");
+
   try {
     await fetch(`${API_CURSOS}/${f.idE.value}`, {
       method: "PUT",
@@ -532,17 +699,22 @@ async function actualizarCurso(e) {
       body: JSON.stringify(data),
     });
 
-    toast("Curso actualizado", "success");
+    toast("Curso actualizado correctamente", "success");
     bootstrap.Modal.getInstance(document.getElementById("modalEditarCurso")).hide();
     fetchCursos();
+
   } catch {
     toast("Error al actualizar curso", "error");
   }
 }
 
-// Eliminar curso
+
+// ======================================================================
+// ========================= ELIMINAR CURSO =============================
+// ======================================================================
+
 async function eliminarCurso(id) {
-  if (!(await confirmDialog("Eliminar curso", `¿Eliminar curso ${id}?`))) return;
+  if (!(await confirmDialog("Eliminar curso", `¿Eliminar el curso ${id}?`))) return;
 
   try {
     await fetch(`${API_CURSOS}/${id}`, {
@@ -552,11 +724,11 @@ async function eliminarCurso(id) {
 
     toast("Curso eliminado", "success");
     fetchCursos();
+
   } catch {
     toast("Error al eliminar curso", "error");
   }
 }
-
 // ======================================================================
 // ========================= DASHBOARD ==================================
 // ======================================================================
@@ -566,82 +738,180 @@ async function initDashboard() {
   ensureAdmin();
 
   try {
+    // Cargar alumnos y cursos simultáneamente
     const [respAl, respCu] = await Promise.all([
       fetch(API_ALUMNOS, { headers: getHeaders() }),
       fetch(API_CURSOS, { headers: getHeaders() }),
     ]);
 
+    if (!respAl.ok || !respCu.ok) throw new Error("Error cargando datos");
+
     const alumnos = await respAl.json();
     const cursos = await respCu.json();
 
+    // ====================
+    //  TOTALES
+    // ====================
     document.getElementById("totalAlumnos").textContent = alumnos.length;
     document.getElementById("totalCursos").textContent = cursos.length;
-    document.getElementById("userName").textContent = localStorage.getItem("username");
+    document.getElementById("userName").textContent =
+      localStorage.getItem("username") || "ADMIN";
 
-    // Últimos alumnos
-    const ultimos = alumnos.slice(-5);
+    // ================================
+    //  ULTIMOS 5 ALUMNOS REGISTRADOS
+    // ================================
+    const ultimos = alumnos.slice(-5); // si luego agregas fecha, aquí se ordena por fecha
+
     const tbody = document.getElementById("tbodyUltimos");
-
     if (tbody) {
-      tbody.innerHTML = ultimos.map(a => {
-        const curso = cursos.find(c => c.alumnoCed === a.estCed);
-        return `
-          <tr>
-            <td>${a.estCed}</td>
-            <td>${a.estNom} ${a.estApe}</td>
-            <td>${curso ? curso.nombre : "<span class='text-muted'>Sin curso</span>"}</td>
-          </tr>
-        `;
-      }).join("");
+      tbody.innerHTML = ultimos
+        .map((a) => {
+          // Buscar curso del alumno (si tiene)
+          const cursoAlumno = cursos.find((c) => c.alumnoCed === a.estCed);
+          return `
+            <tr>
+              <td>${a.estCed}</td>
+              <td>${a.estNom} ${a.estApe}</td>
+              <td>${cursoAlumno ? cursoAlumno.nombre : "<span class='text-muted'>Sin curso</span>"}</td>
+            </tr>
+          `;
+        })
+        .join("");
     }
 
-    // Cursos por alumno → TOP 10
-    const conteo = {};
-    cursos.forEach(c => {
-      const nombre = c.alumnoNombreCompleto || c.alumnoCed;
-      conteo[nombre] = (conteo[nombre] || 0) + 1;
+    // ======================================
+    //  CURSOS POR ALUMNO (TOP 10)
+    // ======================================
+
+    const conteoCursosPorAlumno = {};
+
+    cursos.forEach((c) => {
+      const key = c.alumnoNombreCompleto || c.alumnoCed;
+      conteoCursosPorAlumno[key] = (conteoCursosPorAlumno[key] || 0) + 1;
     });
 
-    let lista = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    let listaAlumnosTop = Object.entries(conteoCursosPorAlumno)
+      .sort((a, b) => b[1] - a[1]) // ordenar descendente
+      .slice(0, 10); // top 10
 
-    const labels = lista.map(x => x[0]);
-    const data = lista.map(x => x[1]);
+    const labelsAlumnos = listaAlumnosTop.map((x) => x[0]);
+    const dataAlumnos = listaAlumnosTop.map((x) => x[1]);
 
-    const ctx = document.getElementById("chartCursosPorAlumno");
-    if (ctx) {
-      new Chart(ctx, {
+    // ================================
+    //  CURSOS ÚNICOS (SIN REPETIDOS)
+    // ================================
+
+    const cursosUnicosConteo = {};
+
+    cursos.forEach((c) => {
+      const nombre = c.nombre.trim().toLowerCase();
+      cursosUnicosConteo[nombre] = (cursosUnicosConteo[nombre] || 0) + 1;
+    });
+
+    let listaCursosTop = Object.entries(cursosUnicosConteo)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    const labelsCursos = listaCursosTop.map((x) => x[0]);
+    const dataCursos = listaCursosTop.map((x) => x[1]);
+
+    // ================================
+    //  GRAFICA: CURSOS POR ALUMNO
+    // ================================
+    const ctx1 = document.getElementById("chartCursosPorAlumno");
+    if (ctx1) {
+      new Chart(ctx1, {
         type: "bar",
         data: {
-          labels,
-          datasets: [{
-            label: "Cursos por alumno",
-            data,
-            backgroundColor: "rgba(0, 123, 255, 0.6)",
-          }],
+          labels: labelsAlumnos,
+          datasets: [
+            {
+              label: "Cursos por alumno",
+              data: dataAlumnos,
+              backgroundColor: "rgba(0, 123, 255, 0.7)",
+            },
+          ],
         },
-        options: { responsive: true }
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } },
+          },
+        },
+      });
+    }
+
+    // ====================================
+    //  GRAFICA: CURSOS REPETIDOS (TOP 10)
+    // ====================================
+    const ctx2 = document.getElementById("chartCursosUnicos");
+    if (ctx2) {
+      new Chart(ctx2, {
+        type: "bar",
+        data: {
+          labels: labelsCursos,
+          datasets: [
+            {
+              label: "Veces repetido",
+              data: dataCursos,
+              backgroundColor: "rgba(40, 167, 69, 0.7)",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } },
+          },
+        },
       });
     }
 
   } catch (e) {
+    console.error(e);
     toast("Error cargando dashboard", "error");
   }
 }
+ // ======================================================================
+ // ========================= INIT PAGES (FINAL) ==========================
+ // ======================================================================
 
-// ======================================================================
-// ========================= INIT PAGES =================================
-// ======================================================================
+ function initAlumnosPage() {
+   loadTheme();
+   ensureAuth();
+   fetchAlumnos();
 
-function initAlumnosPage() {
-  loadTheme();
-  ensureAuth();
-  fetchAlumnos();
-}
+   // Mostrar nombre usuario en navbar
+   const navUser = document.getElementById("userNameNav");
+   if (navUser) navUser.textContent = localStorage.getItem("username") || "";
+ }
 
-async function initCursosPage() {
-  loadTheme();
-  ensureAdmin();
-  await cargarCedulas();          // Cargar cedulas para autocompletar
-  autocompletarCedula("alumnoCed", "listaCedulas");
-  fetchCursos();
-}
+ async function initCursosPage() {
+   loadTheme();
+   ensureAdmin();
+
+   //  cargar alumnos para autocompletar
+   await cargarCedulas();
+
+   // activar autocompletar en el input de crear curso
+   autocompletarCedula("alumnoCed", "listaCedulas");
+
+   //  cargar cursos al iniciar
+   fetchCursos();
+
+   // Mostrar nombre usuario en navbar
+   const navUser = document.getElementById("userNameNav");
+   if (navUser) navUser.textContent = localStorage.getItem("username") || "ADMIN";
+ }
+
+ function initDashboardPage() {
+   loadTheme();
+   ensureAdmin();
+   initDashboard();
+ }
+
+ // ======================================================================
+ // ========================= FIN DEL ARCHIVO ============================
+ // ======================================================================
+
+ console.log("app.js cargado correctamente ✔️");
