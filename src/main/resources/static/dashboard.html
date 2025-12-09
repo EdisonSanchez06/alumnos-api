@@ -24,19 +24,28 @@
 
 <body onload="initDashboard()">
 
-<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm py-2">
     <div class="container-fluid">
 
-        <a class="navbar-brand fw-semibold">
+        <a class="navbar-brand fw-semibold" href="index.html">
             <i class="bi bi-bar-chart-fill me-1"></i> Dashboard
         </a>
 
-        <span class="text-light small me-auto">
+        <div class="flex-grow-1">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
+                <li class="nav-item"><a class="nav-link" href="alumnos.html">Alumnos</a></li>
+                <li class="nav-item"><a class="nav-link" href="cursos.html">Cursos</a></li>
+                <li class="nav-item"><a class="nav-link active" href="dashboard.html">Dashboard</a></li>
+            </ul>
+        </div>
+
+        <span class="text-light small me-3">
             Bienvenido: <b id="userName"></b>
         </span>
 
         <div class="d-flex">
+
             <button class="btn btn-light btn-sm me-2" onclick="toggleTheme()">
                 <i class="bi bi-moon-stars"></i>
             </button>
@@ -44,14 +53,13 @@
             <button class="btn btn-danger btn-sm" onclick="logout()">
                 <i class="bi bi-box-arrow-right me-1"></i> Salir
             </button>
-        </div>
 
+        </div>
     </div>
 </nav>
 
 <div class="container mt-4">
 
-    <!-- TARJETAS RESUMEN -->
     <div class="row g-3">
 
         <div class="col-md-4 col-sm-6">
@@ -80,7 +88,6 @@
 
     </div>
 
-    <!-- GRAFICO -->
     <div class="card mt-4 shadow-sm">
         <div class="card-header fw-semibold">
             <i class="bi bi-graph-up-arrow me-1"></i> Cursos por Alumno
@@ -90,8 +97,7 @@
         </div>
     </div>
 
-    <!-- TABLA RESUMEN -->
-    <div class="card mt-4 shadow-sm mb-4">
+    <div class="card mt-4 shadow-sm">
         <div class="card-header fw-semibold">
             <i class="bi bi-clock-history me-1"></i> Últimos alumnos registrados
         </div>
@@ -113,7 +119,6 @@
 
 </div>
 
-<!-- SCRIPTS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/app.js"></script>
 
