@@ -10,42 +10,39 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 @RestController
 @RequestMapping("/api/cursos")
+@CrossOrigin(origins = {"*"})
 @RequiredArgsConstructor
-@CrossOrigin("*")
 public class CursoController {
 
     private final CursoService service;
 
     @GetMapping
-    public List<CursoResponseDTO> listar() {
+    public List<Curso> listar() {
         return service.listar();
     }
 
     @GetMapping("/{id}")
-    public CursoResponseDTO obtener(@PathVariable Long id) {
-        return service.buscar(id);
-    }
-
-    @GetMapping("/{id}/alumnos")
-    public List<?> alumnosDeCurso(@PathVariable Long id) {
-        return service.listarEstudiantes(id);
+    public Curso obtener(@PathVariable Long id) {
+        return service.buscarPorId(id);
     }
 
     @PostMapping
-    public CursoResponseDTO crear(@RequestBody CursoCreateDTO dto) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public Curso crear(@Valid @RequestBody CursoCreateDTO dto) {
         return service.crear(dto);
     }
 
     @PutMapping("/{id}")
-    public CursoResponseDTO actualizar(
-            @PathVariable Long id,
-            @RequestBody CursoUpdateDTO dto) {
+    public Curso actualizar(@PathVariable Long id,
+                            @Valid @RequestBody CursoUpdateDTO dto) {
         return service.actualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@PathVariable Long id) {
         service.eliminar(id);
     }
