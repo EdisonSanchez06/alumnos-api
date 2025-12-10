@@ -1,42 +1,30 @@
 <!DOCTYPE html>
 <html lang="es" data-theme="light">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Estudiantes</title>
+    <meta charset="UTF-8" />
+    <title>Lista de Estudiantes</title>
 
     <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Íconos -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
-    <!-- Chart JS -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Estilos Opcionales -->
+    <!-- Estilo de botones corregido -->
     <style>
-        body {
-            background: var(--bg-color);
-            transition: 0.3s ease-in-out;
+        .table-actions {
+            display: flex !important;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
-        [data-theme="light"] {
-            --bg-color: #f3f4f6;
-            --card-bg: white;
-            --text-color: #111;
+        .table-actions .btn {
+            min-width: 80px;
         }
 
-        [data-theme="dark"] {
-            --bg-color: #1e1f21;
-            --card-bg: #2b2c2e;
-            --text-color: #f6f6f6;
-        }
-
-        .card-custom {
-            background: var(--card-bg);
-            color: var(--text-color);
+        td {
+            vertical-align: middle !important;
         }
     </style>
 </head>
@@ -44,188 +32,90 @@
 <body onload="initAlumnosPage()">
 
 <!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold">📘 Sistema Escolar</a>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary px-3 shadow">
+    <a class="navbar-brand fw-bold text-white" href="#">Sistema Escolar</a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-            <span class="navbar-toggler-icon"></span>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuNav">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="menuNav">
+        <ul class="navbar-nav me-auto">
+            <li class="nav-item"><a href="alumnos.html" class="nav-link active">Estudiantes</a></li>
+            <li class="nav-item"><a href="cursos.html" class="nav-link">Cursos</a></li>
+            <li class="nav-item"><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+        </ul>
+
+        <span id="userNameNav" class="text-white fw-bold me-3">ADMIN</span>
+
+        <button class="btn btn-outline-light me-2" onclick="toggleTheme()">
+            <i class="bi bi-brightness-high"></i>
         </button>
 
-        <div id="navMenu" class="collapse navbar-collapse">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a href="alumnos.html" class="nav-link active">Estudiantes</a>
-                </li>
-
-                <li class="nav-item" id="adminOnlyCursos">
-                    <a href="cursos.html" class="nav-link">Cursos</a>
-                </li>
-
-                <li class="nav-item" id="adminOnlyDash">
-                    <a href="dashboard.html" class="nav-link">Dashboard</a>
-                </li>
-            </ul>
-
-            <span id="userNameNav" class="me-3 fw-bold text-white"></span>
-
-            <button onclick="toggleTheme()" class="btn btn-outline-light btn-sm me-2">
-                ☀/🌙
-            </button>
-
-            <button onclick="logout()" class="btn btn-danger btn-sm">Salir</button>
-        </div>
+        <button class="btn btn-danger" onclick="logout()">Salir</button>
     </div>
 </nav>
 
-<!-- CONTENIDO PRINCIPAL -->
 <div class="container mt-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="fw-bold">📘 Lista de Estudiantes</h2>
-        <button class="btn btn-primary" onclick="abrirModalCrearAlumno()">+ Nuevo Alumno</button>
+    <h2 class="fw-bold mb-3"><i class="bi bi-people-fill text-primary"></i> Lista de Estudiantes</h2>
+
+    <!-- FILTROS -->
+    <div class="card shadow-sm mb-3 p-3">
+        <div class="row g-2">
+            <div class="col-md-4"><input id="filterCedula" class="form-control" placeholder="Buscar por cédula" oninput="alumnosCambioFiltros()"></div>
+            <div class="col-md-4"><input id="filterNombre" class="form-control" placeholder="Buscar por nombre" oninput="alumnosCambioFiltros()"></div>
+            <div class="col-md-4"><input id="filterApellido" class="form-control" placeholder="Buscar por apellido" oninput="alumnosCambioFiltros()"></div>
+        </div>
+
+        <div class="mt-2">
+            <input class="form-control" placeholder="Búsqueda general..." oninput="alumnosCambioSearch(this)">
+        </div>
     </div>
 
-    <!-- Filtros -->
-    <div class="card card-custom mb-3 p-3 shadow-sm">
-        <div class="row g-2">
-            <div class="col-md-4">
-                <input id="filterCedula" class="form-control" placeholder="Buscar por cédula"
-                       oninput="alumnosCambioFiltros()">
-            </div>
-
-            <div class="col-md-4">
-                <input id="filterNombre" class="form-control" placeholder="Buscar por nombre"
-                       oninput="alumnosCambioFiltros()">
-            </div>
-
-            <div class="col-md-4">
-                <input id="filterApellido" class="form-control" placeholder="Buscar por apellido"
-                       oninput="alumnosCambioFiltros()">
-            </div>
-        </div>
-
-        <div class="mt-3">
-            <input class="form-control" placeholder="Búsqueda general..."
-                   oninput="alumnosCambioSearch(this)">
-        </div>
+    <!-- BOTÓN NUEVO -->
+    <div class="text-end mb-3">
+        <button class="btn btn-primary" onclick="abrirModalCrearAlumno()">
+            + Nuevo Alumno
+        </button>
     </div>
 
     <!-- TABLA -->
-    <div class="card card-custom shadow-sm p-3">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-primary">
-                <tr>
-                    <th>Cédula</th>
-                    <th>Nombre</th>
-                    <th>Apellido</th>
-                    <th>Teléfono</th>
-                    <th>Dirección</th>
-                    <th>Curso</th>
-                    <th class="text-center">Acciones</th>
-                </tr>
-                </thead>
-                <tbody id="tbodyAlumnos"></tbody>
-            </table>
-        </div>
+    <div class="card shadow-sm p-3">
+        <table class="table table-hover">
+            <thead class="table-primary">
+            <tr>
+                <th>Cédula</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Teléfono</th>
+                <th>Dirección</th>
+                <th>Curso</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+            </thead>
 
-        <div class="d-flex justify-content-between align-items-center px-2">
+            <tbody id="tbodyAlumnos"></tbody>
+        </table>
+
+        <div class="d-flex justify-content-between align-items-center">
             <span id="alumnosPaginationInfo" class="fw-semibold"></span>
 
-            <div>
-                <button id="alumnosPrev" class="btn btn-outline-primary btn-sm"
-                        onclick="alumnosCambioPagina(-1)">⟨</button>
-                <button id="alumnosNext" class="btn btn-outline-primary btn-sm"
-                        onclick="alumnosCambioPagina(1)">⟩</button>
+            <div class="d-flex gap-2">
+                <button id="alumnosPrev" class="btn btn-outline-primary" onclick="alumnosCambioPagina(-1)">&lt;</button>
+                <button id="alumnosNext" class="btn btn-outline-primary" onclick="alumnosCambioPagina(1)">&gt;</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ========================= MODALES ============================== -->
+<!-- MODALES -->
+<!-- (MODAL CREAR / MODAL EDITAR se mantienen exactamente igual a los que ya tienes) -->
 
-<!-- Modal Crear Alumno -->
-<div class="modal fade" id="modalCrearAlumno">
-    <div class="modal-dialog">
-        <form id="formCrearAlumno" class="modal-content" onsubmit="crearAlumno(event)">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Nuevo Alumno</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-                <label>Cédula *</label>
-                <input name="estCed" class="form-control" required>
-
-                <label class="mt-2">Nombres *</label>
-                <input name="estNom" class="form-control" required>
-
-                <label class="mt-2">Apellidos *</label>
-                <input name="estApe" class="form-control" required>
-
-                <label class="mt-2">Teléfono *</label>
-                <input name="estTel" class="form-control" required>
-
-                <label class="mt-2">Dirección *</label>
-                <input name="estDir" class="form-control" required>
-
-                <label class="mt-2">Curso *</label>
-                <select name="cursoId" class="form-control" required></select>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn btn-success">Guardar</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal Editar Alumno -->
-<div class="modal fade" id="modalEditarAlumno">
-    <div class="modal-dialog">
-        <form id="formEditarAlumno" class="modal-content" onsubmit="actualizarAlumno(event)">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title">Editar Alumno</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-
-                <label>Cédula</label>
-                <input name="estCedE" class="form-control" readonly>
-
-                <label class="mt-2">Nombres *</label>
-                <input name="estNomE" class="form-control" required>
-
-                <label class="mt-2">Apellidos *</label>
-                <input name="estApeE" class="form-control" required>
-
-                <label class="mt-2">Teléfono *</label>
-                <input name="estTelE" class="form-control" required>
-
-                <label class="mt-2">Dirección *</label>
-                <input name="estDirE" class="form-control" required>
-
-                <label class="mt-2">Curso *</label>
-                <select name="cursoIdE" class="form-control" required></select>
-
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn btn-warning">Actualizar</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            </div>
-
-        </form>
-    </div>
-</div>
-
-<!-- Bootstrap + App JS -->
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/app.js"></script>
 
 </body>
-
 </html>

@@ -195,20 +195,54 @@ function clearValidation(form) {
 async function cargarAlumnos() {
   try {
     const resp = await fetch(API_ALUMNOS, { headers: getHeaders() });
-    alumnosData = await resp.json();
-  } catch {
+
+    if (!resp.ok) {
+      alumnosData = [];
+      throw new Error("Error al cargar alumnos");
+    }
+
+    const data = await resp.json();
+
+    if (!Array.isArray(data)) {
+      alumnosData = [];
+      throw new Error("Respuesta inválida del servidor");
+    }
+
+    alumnosData = data;
+
+  } catch (e) {
+    console.error(e);
+    alumnosData = [];
     toast("Error al cargar alumnos", "error");
   }
 }
 
+
 async function cargarCursos() {
   try {
     const resp = await fetch(API_CURSOS, { headers: getHeaders() });
-    cursosData = await resp.json();
-  } catch {
+
+    if (!resp.ok) {
+      cursosData = [];
+      throw new Error("Error al cargar cursos");
+    }
+
+    const data = await resp.json();
+
+    if (!Array.isArray(data)) {
+      cursosData = [];
+      throw new Error("Respuesta inválida del servidor");
+    }
+
+    cursosData = data;
+
+  } catch (e) {
+    console.error(e);
+    cursosData = [];
     toast("Error al cargar cursos", "error");
   }
 }
+
 
 function getCursoLabelById(id) {
   const c = cursosData.find((x) => x.id === id);
