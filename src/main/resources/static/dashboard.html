@@ -156,23 +156,29 @@
     </div>
 
     <!-- FILTROS -->
-    <div class="card shadow-sm mt-4 p-4 rounded-box">
+    <div class="card shadow-sm mt-4 p-4 rounded-box filter-box">
         <h5 class="mb-3 fw-bold">🔍 Filtros del Dashboard</h5>
 
         <div class="row g-3">
             <div class="col-md-4">
-                <label>Curso</label>
-                <select id="filtroCurso" class="form-select"></select>
+                <label class="form-label">Curso</label>
+                <select id="filtroCurso" class="form-select">
+                    <option value="">Todos</option>
+                </select>
             </div>
 
             <div class="col-md-4">
-                <label>Nivel</label>
-                <select id="filtroNivel" class="form-select"></select>
+                <label class="form-label">Nivel</label>
+                <select id="filtroNivel" class="form-select">
+                    <option value="">Todos</option>
+                </select>
             </div>
 
             <div class="col-md-4">
-                <label>Paralelo</label>
-                <select id="filtroParalelo" class="form-select"></select>
+                <label class="form-label">Paralelo</label>
+                <select id="filtroParalelo" class="form-select">
+                    <option value="">Todos</option>
+                </select>
             </div>
         </div>
     </div>

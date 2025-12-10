@@ -1050,7 +1050,9 @@ function cargarFiltrosCursos(cursos) {
 
   if (!filtroCurso || !filtroNivel || !filtroParalelo) return;
 
-  filtroCurso.innerHTML = `<option value="">Todos</option>`;
+  filtroCurso.innerHTML =
+    `<option value="">Todos</option>` +
+    cursos.map(c => `<option value="${c.id}">${c.nombre} (${c.nivel}-${c.paralelo})</option>`).join("");
   filtroNivel.innerHTML = `<option value="">Todos</option>`;
   filtroParalelo.innerHTML = `<option value="">Todos</option>`;
 
@@ -1074,16 +1076,24 @@ function cargarFiltrosCursos(cursos) {
     (p) => (filtroParalelo.innerHTML += `<option value="${p}">${p}</option>`)
   );
 }
-
-// Aplica filtros y reconstruye ambos gráficos
-function filtrarGrafico() {
+//activar filtros
+function activarEventosDashboard() {
   const filtroCurso = document.getElementById("filtroCurso");
   const filtroNivel = document.getElementById("filtroNivel");
   const filtroParalelo = document.getElementById("filtroParalelo");
 
-  const cursoSel = filtroCurso ? filtroCurso.value : "";
-  const nivelSel = filtroNivel ? filtroNivel.value : "";
-  const paraleloSel = filtroParalelo ? filtroParalelo.value : "";
+  if (!filtroCurso || !filtroNivel || !filtroParalelo) return;
+
+  filtroCurso.onchange = filtrarGrafico;
+  filtroNivel.onchange = filtrarGrafico;
+  filtroParalelo.onchange = filtrarGrafico;
+}
+
+// Aplica filtros y reconstruye ambos gráficos
+function filtrarGrafico() {
+  const cursoSel = document.getElementById("filtroCurso")?.value || "";
+  const nivelSel = document.getElementById("filtroNivel")?.value || "";
+  const paraleloSel = document.getElementById("filtroParalelo")?.value || "";
 
   const conteoCursos = {};
   const conteoNiveles = {};
@@ -1092,15 +1102,14 @@ function filtrarGrafico() {
     const cursoId = getAlumnoCursoId(a);
     const curso = cursosData.find((c) => Number(c.id) === Number(cursoId));
 
-    // aplicar filtros
-    if (curso) {
-      if (cursoSel && curso.nombre !== cursoSel) return;
-      if (nivelSel && curso.nivel !== nivelSel) return;
-      if (paraleloSel && curso.paralelo !== paraleloSel) return;
-    } else {
-      // alumno sin curso -> mostrar solo si no se está filtrando
-      if (cursoSel || nivelSel || paraleloSel) return;
-    }
+    // FILTRO POR CURSO (USAR ID REAL)
+    if (cursoSel && curso && Number(curso.id) !== Number(cursoSel)) return;
+
+    // FILTRO POR NIVEL
+    if (nivelSel && curso?.nivel !== nivelSel) return;
+
+    // FILTRO POR PARALELO
+    if (paraleloSel && curso?.paralelo !== paraleloSel) return;
 
     // gráfico por curso
     const keyCurso = curso
@@ -1109,7 +1118,7 @@ function filtrarGrafico() {
 
     conteoCursos[keyCurso] = (conteoCursos[keyCurso] || 0) + 1;
 
-    // gráfico por niveles
+    // gráfico por nivel
     const keyNivel = curso ? curso.nivel : "Sin curso";
     conteoNiveles[keyNivel] = (conteoNiveles[keyNivel] || 0) + 1;
   });
@@ -1117,6 +1126,7 @@ function filtrarGrafico() {
   buildChart(conteoCursos);
   buildNivelChart(conteoNiveles);
 }
+
 
 // Init dashboard
 async function initDashboard() {
@@ -1163,9 +1173,15 @@ async function initDashboard() {
         .join("");
     }
 
+
     // cargar filtros y construir gráficos
     cargarFiltrosCursos(cursosData);
+
+    // ACTIVAR EVENTOS DE FILTROS
+    activarEventosDashboard();
+
     filtrarGrafico();
+
   } catch (e) {
     console.error(e);
     toast("Error cargando dashboard", "error");
