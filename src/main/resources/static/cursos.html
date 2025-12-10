@@ -1,86 +1,138 @@
 <!DOCTYPE html>
 <html lang="es" data-theme="light">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>Lista de Cursos</title>
 
-    <!-- Bootstrap -->
+    <!-- BOOTSTRAP -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Íconos -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- ICONOS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
+    <!-- SWEETALERT -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- ESTILOS PERSONALIZADOS -->
     <style>
-        .table-actions {
-            display: flex !important;
-            gap: 8px;
-            justify-content: center;
-            flex-wrap: wrap;
+        body {
+            background: var(--bg-color, #f5f6fa);
+            transition: 0.3s ease-in-out;
+            font-family: 'Segoe UI', sans-serif;
         }
-        .table-actions .btn {
-            min-width: 80px;
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
         }
-        td {
-            vertical-align: middle !important;
+
+        .table thead {
+            background: #e6f0ff;
+        }
+
+        .btn-action {
+            padding: 4px 10px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .btn-action:hover {
+            transform: scale(1.05);
+        }
+
+        .filter-box input {
+            border-radius: 10px;
         }
     </style>
+
 </head>
 
 <body onload="initCursosPage()">
 
 <!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary px-3 shadow">
-    <a class="navbar-brand fw-bold text-white" href="#">Sistema Escolar</a>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container-fluid">
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuNav">
-        <span class="navbar-toggler-icon"></span>
-    </button>
+        <a class="navbar-brand fw-bold" href="#">📘 Sistema Escolar</a>
 
-    <div class="collapse navbar-collapse" id="menuNav">
-        <ul class="navbar-nav me-auto">
-            <li class="nav-item"><a href="alumnos.html" class="nav-link">Estudiantes</a></li>
-            <li class="nav-item"><a href="cursos.html" class="nav-link active">Cursos</a></li>
-            <li class="nav-item"><a href="dashboard.html" class="nav-link">Dashboard</a></li>
-        </ul>
-
-        <span id="userNameNav" class="text-white fw-bold me-3">ADMIN</span>
-
-        <button class="btn btn-outline-light me-2" onclick="toggleTheme()">
-            <i class="bi bi-brightness-high"></i>
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
         </button>
 
-        <button class="btn btn-danger" onclick="logout()">Salir</button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="alumnos.html">Estudiantes</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active fw-bold" href="cursos.html">Cursos</a>
+                </li>
+                <li class="nav-item admin-only">
+                    <a class="nav-link" href="dashboard.html">Dashboard</a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-3">
+                <span id="userNameNav" class="text-white fw-bold"></span>
+
+                <button class="btn btn-outline-light btn-sm" onclick="toggleTheme()">
+                    <i class="bi bi-brightness-high"></i>
+                </button>
+
+                <button class="btn btn-danger btn-sm" onclick="logout()">
+                    Salir
+                </button>
+            </div>
+        </div>
+
     </div>
 </nav>
 
+<!-- CONTENIDO -->
 <div class="container mt-4">
 
-    <h2 class="fw-bold mb-3"><i class="bi bi-collection-fill text-primary"></i> Lista de Cursos</h2>
+    <!-- TITULO + BTN NUEVO -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="page-title">📚 Lista de Cursos</h2>
 
-    <!-- FILTROS -->
-    <div class="card shadow-sm mb-3 p-3">
-        <div class="row g-2">
-            <div class="col-md-4"><input id="filterCursoNombre" class="form-control" placeholder="Buscar por nombre" oninput="cursosCambioFiltros()"></div>
-            <div class="col-md-4"><input id="filterCursoNivel" class="form-control" placeholder="Buscar por nivel" oninput="cursosCambioFiltros()"></div>
-            <div class="col-md-4"><input id="filterCursoParalelo" class="form-control" placeholder="Buscar por paralelo" oninput="cursosCambioFiltros()"></div>
-        </div>
-
-        <div class="mt-2">
-            <input class="form-control" placeholder="Búsqueda general..." oninput="cursosCambioSearch(this)">
-        </div>
+        <button class="btn btn-primary" onclick="abrirModalCrearCurso()">
+            <i class="bi bi-plus-circle"></i> Nuevo Curso
+        </button>
     </div>
 
-    <!-- BOTÓN NUEVO -->
-    <div class="text-end mb-3">
-        <button class="btn btn-primary" onclick="abrirModalCrearCurso()">
-            + Nuevo Curso
-        </button>
+    <!-- FILTROS -->
+    <div class="card shadow-sm mb-4 p-3 filter-box">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <input id="filterCursoNombre" type="text" class="form-control"
+                       placeholder="Buscar por nombre" oninput="cursosCambioFiltros()">
+            </div>
+
+            <div class="col-md-4">
+                <input id="filterCursoNivel" type="text" class="form-control"
+                       placeholder="Buscar por nivel" oninput="cursosCambioFiltros()">
+            </div>
+
+            <div class="col-md-4">
+                <input id="filterCursoParalelo" type="text" class="form-control"
+                       placeholder="Buscar por paralelo" oninput="cursosCambioFiltros()">
+            </div>
+
+            <div class="col-md-12">
+                <input type="text" class="form-control"
+                       placeholder="Búsqueda general..." oninput="cursosCambioSearch(this)">
+            </div>
+        </div>
     </div>
 
     <!-- TABLA -->
     <div class="card shadow-sm p-3">
         <table class="table table-hover">
-            <thead class="table-primary">
+            <thead>
             <tr>
                 <th>ID</th>
                 <th>Nombre</th>
@@ -94,22 +146,91 @@
             <tbody id="tbodyCursos"></tbody>
         </table>
 
-        <div class="d-flex justify-content-between align-items-center">
-            <span id="cursosPaginationInfo" class="fw-semibold"></span>
-            <div class="d-flex gap-2">
-                <button id="cursosPrev" class="btn btn-outline-primary" onclick="cursosCambioPagina(-1)">&lt;</button>
-                <button id="cursosNext" class="btn btn-outline-primary" onclick="cursosCambioPagina(1)">&gt;</button>
+        <!-- PAGINACIÓN -->
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <span id="cursosPaginationInfo"></span>
+
+            <div>
+                <button class="btn btn-outline-primary btn-sm" onclick="cursosCambioPagina(-1)">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button class="btn btn-outline-primary btn-sm" onclick="cursosCambioPagina(1)">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
             </div>
         </div>
     </div>
 
 </div>
 
-<!-- MODALES (Crear / Editar) — siguen igual que los que ya tienes -->
+<!-- MODAL CREAR CURSO -->
+<div class="modal fade" id="modalCrearCurso">
+    <div class="modal-dialog">
+        <form id="formCrearCurso" class="modal-content" onsubmit="crearCurso(event)">
+            <div class="modal-header">
+                <h5 class="modal-title">Nuevo Curso</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
 
-<!-- JS -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label>Nombre</label>
+                    <input name="nombre" type="text" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                    <label>Nivel</label>
+                    <input name="nivel" type="text" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                    <label>Paralelo</label>
+                    <input name="paralelo" type="text" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-success">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL EDITAR CURSO -->
+<div class="modal fade" id="modalEditarCurso">
+    <div class="modal-dialog">
+        <form id="formEditarCurso" class="modal-content" onsubmit="actualizarCurso(event)">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Curso</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <input type="hidden" name="idE">
+
+                <div class="mb-2">
+                    <label>Nombre</label>
+                    <input name="nombreE" type="text" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                    <label>Nivel</label>
+                    <input name="nivelE" type="text" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                    <label>Paralelo</label>
+                    <input name="paraleloE" type="text" class="form-control" required>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-warning">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/app.js"></script>
 
 </body>

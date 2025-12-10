@@ -3,114 +3,170 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard – Sistema Escolar</title>
+    <title>Dashboard – Administración</title>
 
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- BOOTSTRAP -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Chart.js -->
+    <!-- ICONOS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- CHART JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- SweetAlert -->
+    <!-- SWEETALERT -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         body {
-            background: var(--bg-color);
-            transition: 0.3s;
+            background: var(--bg, #f4f6fa);
+            transition: 0.3s ease-in-out;
+            font-family: 'Segoe UI', sans-serif;
         }
 
-        [data-theme="light"] {
-            --bg-color: #f4f5f7;
-            --card-bg: #ffffff;
-            --text-color: #111;
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
         }
 
-        [data-theme="dark"] {
-            --bg-color: #1f2023;
-            --card-bg: #2b2c30;
-            --text-color: #f5f5f5;
+        .card-stat {
+            padding: 25px;
+            border-radius: 14px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, .12);
         }
 
-        .card-custom {
-            background: var(--card-bg);
-            color: var(--text-color);
-            border-radius: 12px;
+        .card-stat i {
+            font-size: 2.2rem;
         }
 
-        .stats-box {
-            padding: 20px;
-            border-radius: 12px;
-            background: var(--card-bg);
-            color: var(--text-color);
-            box-shadow: 0 3px 8px rgba(0, 0, 0, .08);
+        .card-blue {
+            background: linear-gradient(135deg, #1976d2, #42a5f5);
         }
 
-        table {
-            color: var(--text-color);
+        .card-green {
+            background: linear-gradient(135deg, #2e7d32, #66bb6a);
+        }
+
+        .card-orange {
+            background: linear-gradient(135deg, #ef6c00, #ff9800);
+        }
+
+        .card table thead {
+            background: #e8f0ff;
+        }
+
+        .rounded-box {
+            border-radius: 14px;
         }
     </style>
+
 </head>
 
 <body onload="initDashboardPage()">
 
 <!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
     <div class="container-fluid">
 
-        <a class="navbar-brand fw-bold">📊 Dashboard</a>
+        <a class="navbar-brand fw-bold" href="#">📘 Sistema Escolar</a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div id="navMenu" class="collapse navbar-collapse">
-            <ul class="navbar-nav me-auto">
+        <div id="navbarNav" class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-                <li class="nav-item"><a href="alumnos.html" class="nav-link">Estudiantes</a></li>
-                <li class="nav-item"><a href="cursos.html" class="nav-link">Cursos</a></li>
-                <li class="nav-item"><a href="dashboard.html" class="nav-link active">Dashboard</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="alumnos.html">Estudiantes</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="cursos.html">Cursos</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link active fw-bold" href="dashboard.html">Dashboard</a>
+                </li>
 
             </ul>
 
-            <span id="userName" class="fw-bold me-3"></span>
+            <div class="d-flex align-items-center gap-3">
+                <span id="userName" class="text-white fw-bold"></span>
 
-            <button onclick="toggleTheme()" class="btn btn-outline-light btn-sm me-2">☀/🌙</button>
-            <button onclick="logout()" class="btn btn-danger btn-sm">Salir</button>
+                <button class="btn btn-outline-light btn-sm" onclick="toggleTheme()">
+                    <i class="bi bi-brightness-high"></i>
+                </button>
 
+                <button class="btn btn-danger btn-sm" onclick="logout()">
+                    Salir
+                </button>
+            </div>
         </div>
+
     </div>
 </nav>
 
+<!-- CONTENIDO -->
 <div class="container mt-4">
 
-    <!-- ESTADÍSTICAS SUPERIORES -->
-    <div class="row g-3 mb-4">
+    <h2 class="page-title mb-4">📊 Panel de Administración</h2>
 
-        <div class="col-md-6">
-            <div class="stats-box">
-                <h4 class="fw-bold">👨‍🎓 Total Estudiantes</h4>
-                <h2 id="totalAlumnos" class="fw-bold text-primary">0</h2>
+    <!-- ESTADISTICAS -->
+    <div class="row g-4">
+
+        <div class="col-md-4">
+            <div class="card-stat card-blue d-flex justify-content-between align-items-center">
+                <div>
+                    <div>Total Estudiantes</div>
+                    <div id="totalAlumnos" class="fs-2 fw-bold">0</div>
+                </div>
+                <i class="bi bi-people-fill"></i>
             </div>
         </div>
 
-        <div class="col-md-6">
-            <div class="stats-box">
-                <h4 class="fw-bold">🏫 Total Cursos</h4>
-                <h2 id="totalCursos" class="fw-bold text-success">0</h2>
+        <div class="col-md-4">
+            <div class="card-stat card-green d-flex justify-content-between align-items-center">
+                <div>
+                    <div>Total Cursos</div>
+                    <div id="totalCursos" class="fs-2 fw-bold">0</div>
+                </div>
+                <i class="bi bi-journal-bookmark-fill"></i>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card-stat card-orange d-flex justify-content-between align-items-center">
+                <div>
+                    <div>Último acceso</div>
+                    <div class="fs-6 fw-bold" id="lastLogin">Hoy</div>
+                </div>
+                <i class="bi bi-clock-history"></i>
             </div>
         </div>
 
     </div>
 
-    <!-- TABLA DE ÚLTIMOS ESTUDIANTES -->
-    <div class="card card-custom shadow-sm mb-4 p-3">
-        <h5 class="fw-bold mb-3">📅 Últimos estudiantes registrados</h5>
+    <!-- GRAFICO -->
+    <div class="card shadow-sm mt-4 p-4 rounded-box">
+        <h5 class="mb-3 fw-bold">📈 Estudiantes por Curso</h5>
+        <canvas id="chartAlumnosPorCurso" height="100"></canvas>
+    </div>
+
+    <!-- ÚLTIMOS ESTUDIANTES -->
+    <div class="card shadow-sm mt-4 p-4 rounded-box">
+
+        <h5 class="fw-bold mb-3">🧾 Últimos Estudiantes Registrados</h5>
 
         <div class="table-responsive">
             <table class="table table-hover">
-                <thead class="table-primary">
+                <thead>
                 <tr>
                     <th>Cédula</th>
                     <th>Nombre</th>
@@ -120,21 +176,14 @@
                 <tbody id="tbodyUltimos"></tbody>
             </table>
         </div>
-    </div>
 
-    <!-- GRÁFICO -->
-    <div class="card card-custom shadow-sm p-4">
-        <h5 class="fw-bold mb-3">📊 Distribución de estudiantes por curso</h5>
-
-        <canvas id="chartAlumnosPorCurso" height="120"></canvas>
     </div>
 
 </div>
 
-<!-- JS -->
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/app.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
-
 </html>
