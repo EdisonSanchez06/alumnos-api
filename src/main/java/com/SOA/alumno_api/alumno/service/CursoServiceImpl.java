@@ -18,6 +18,30 @@ public class CursoServiceImpl implements CursoService {
     private final CursoRepository cursoRepo;
     private final AlumnoRepository alumnoRepo;
 
+    // ============================================
+    // 🔥 VALIDACIONES INTERNAS
+    // ============================================
+    private void validarNombre(String nombre) {
+        if (nombre == null || !nombre.matches("^[A-Za-zÁÉÍÓÚÑáéíóúñ ]{3,40}$")) {
+            throw new RuntimeException("Nombre inválido: solo letras (mínimo 3).");
+        }
+    }
+
+    private void validarNivel(String nivel) {
+        if (nivel == null || !nivel.matches("^[A-Za-zÁÉÍÓÚÑáéíóúñ ]{1,20}$")) {
+            throw new RuntimeException("Nivel inválido: solo letras.");
+        }
+    }
+
+    private void validarParalelo(String paralelo) {
+        if (paralelo == null || !paralelo.matches("^[A-Z]{1}$")) {
+            throw new RuntimeException("Paralelo inválido: solo UNA letra mayúscula.");
+        }
+    }
+
+    // ============================================
+    // LISTAR
+    // ============================================
     @Override
     public List<Curso> listar() {
         return cursoRepo.findAll();
@@ -29,14 +53,22 @@ public class CursoServiceImpl implements CursoService {
                 .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
     }
 
+    // ============================================
+    // CREAR CURSO
+    // ============================================
     @Override
     public Curso crear(CursoCreateDTO dto) {
 
         String nombre = dto.getNombre().trim();
-        String nivel = dto.getNivel().trim().toLowerCase(); // normalizar
-        String paralelo = dto.getParalelo().trim().toUpperCase(); // normalizar
+        String nivel = dto.getNivel().trim().toLowerCase();
+        String paralelo = dto.getParalelo().trim().toUpperCase();
 
-        // 🔥 VALIDACIÓN: evitar cursos duplicados
+        // 🔥 VALIDACIONES
+        validarNombre(nombre);
+        validarNivel(nivel);
+        validarParalelo(paralelo);
+
+        // 🔥 EVITAR DUPLICADO
         if (cursoRepo.existsByNombreIgnoreCaseAndNivelIgnoreCaseAndParaleloIgnoreCase(
                 nombre, nivel, paralelo)) {
             throw new RuntimeException("Ya existe un curso con ese nombre, nivel y paralelo.");
@@ -51,6 +83,9 @@ public class CursoServiceImpl implements CursoService {
         return cursoRepo.save(c);
     }
 
+    // ============================================
+    // ACTUALIZAR CURSO
+    // ============================================
     @Override
     public Curso actualizar(Long id, CursoUpdateDTO dto) {
 
@@ -60,7 +95,12 @@ public class CursoServiceImpl implements CursoService {
         String nivel = dto.getNivel().trim().toLowerCase();
         String paralelo = dto.getParalelo().trim().toUpperCase();
 
-        // 🔥 VALIDACIÓN: evitar duplicados al editar
+        // 🔥 VALIDACIONES
+        validarNombre(nombre);
+        validarNivel(nivel);
+        validarParalelo(paralelo);
+
+        // 🔥 EVITAR DUPLICADO (excepto el mismo curso)
         if (cursoRepo.existsByNombreIgnoreCaseAndNivelIgnoreCaseAndParaleloIgnoreCaseAndIdNot(
                 nombre, nivel, paralelo, id)) {
             throw new RuntimeException("Ya existe otro curso con ese nombre, nivel y paralelo.");
@@ -73,6 +113,9 @@ public class CursoServiceImpl implements CursoService {
         return cursoRepo.save(c);
     }
 
+    // ============================================
+    // ELIMINAR
+    // ============================================
     @Override
     public void eliminar(Long id) {
         Curso c = buscarPorId(id);
@@ -85,6 +128,9 @@ public class CursoServiceImpl implements CursoService {
         cursoRepo.delete(c);
     }
 
+    // ============================================
+    // ALUMNOS POR CURSO
+    // ============================================
     @Override
     public List<Alumno> listarEstudiantes(Long cursoId) {
         Curso c = buscarPorId(cursoId);
