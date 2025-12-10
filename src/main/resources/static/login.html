@@ -1,89 +1,78 @@
 <!DOCTYPE html>
-<html lang="es">
-
+<html lang="es" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión – Sistema Académico</title>
+    <title>Login – Sistema Académico</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Bootstrap -->
+    <!-- Bootstrap & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <style>
-        body {
-            background: linear-gradient(135deg, #007bff, #4da6ff);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .login-card {
-            width: 380px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(12px);
-            border-radius: 15px;
-            padding: 35px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-            color: white;
-            text-align: center;
-        }
-
-        .login-card input {
-            background: rgba(255, 255, 255, 0.3);
-            color: #fff;
-        }
-
-        .login-card input::placeholder {
-            color: #eee;
-        }
-
-        .btn-login {
-            background: #0056d6;
-            color: #fff;
-            font-size: 17px;
-        }
-
-        .btn-login:hover {
-            background: #0046ad;
-        }
-    </style>
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 
-<body>
+<body class="login-body">
 
-<div class="login-card">
-    <h2 class="mb-4"><i class="fa-solid fa-graduation-cap"></i> Sistema Académico</h2>
+<div class="login-wrapper d-flex align-items-center justify-content-center">
+    <div class="card login-card shadow-lg">
 
-    <form id="formLogin" onsubmit="login(event)">
-        <div class="mb-3" style="text-align:left;">
-            <label class="form-label">Usuario</label>
-            <input type="text" name="usuario" required class="form-control" placeholder="admin / secre">
+        <div class="card-body p-4">
+
+            <div class="text-center mb-3">
+                <div class="icon-circle mb-2">
+                    <i class="bi bi-mortarboard-fill fs-1 text-primary"></i>
+                </div>
+                <h4 class="fw-bold mb-0">Sistema Académico</h4>
+                <small class="text-muted">Accede con tu usuario</small>
+            </div>
+
+            <form onsubmit="login(event)">
+                <div class="mb-3">
+                    <label class="form-label">Usuario</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input name="usuario" class="form-control" placeholder="admin / secretaria" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Contraseña</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input name="clave" type="password" class="form-control" placeholder="********" required>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <button class="btn btn-primary w-100">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Ingresar
+                    </button>
+                </div>
+            </form>
+
+            <div class="text-center mt-3">
+                <button class="btn btn-sm btn-outline-secondary" onclick="toggleTheme()">
+                    <i class="bi bi-moon-stars"></i> Modo oscuro / claro
+                </button>
+            </div>
+
         </div>
-
-        <div class="mb-3" style="text-align:left;">
-            <label class="form-label">Contraseña</label>
-            <input type="password" name="clave" required class="form-control" placeholder="********">
-        </div>
-
-        <button class="btn btn-login w-100 mt-3">
-            <i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión
-        </button>
-    </form>
-
-    <p class="mt-4" style="font-size:13px; opacity:0.7;">© 2025 Sistema Académico – SOA</p>
+    </div>
 </div>
 
-<!-- SweetAlert -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<!-- Bootstrap -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<!-- App -->
 <script src="js/app.js"></script>
 
-</body>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+      loadTheme();
+    });
+</script>
 
+</body>
 </html>

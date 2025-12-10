@@ -1,58 +1,70 @@
-package com.soa.alumno_api.alumno.service;
+package com.soa.alumno_api.alumno.service.impl;
 
-import com.soa.alumno_api.alumno.dto.CursoCreateDTO;
-import com.soa.alumno_api.alumno.dto.CursoUpdateDTO;
+import com.soa.alumno_api.alumno.dto.*;
 import com.soa.alumno_api.alumno.entity.Curso;
+import com.soa.alumno_api.alumno.repo.AlumnoRepository;
 import com.soa.alumno_api.alumno.repo.CursoRepository;
+import com.soa.alumno_api.alumno.service.CursoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-@Service
-@RequiredArgsConstructor
+
+@Service @RequiredArgsConstructor
 public class CursoServiceImpl implements CursoService {
 
     private final CursoRepository repo;
+    private final AlumnoRepository alumnoRepo;
 
     @Override
-    public List<Curso> listar() {
-        return repo.findAll();
+    public List<CursoResponseDTO> listar() {
+        return repo.findAll().stream()
+                .map(c -> new CursoResponseDTO(
+                        c.getId(),
+                        c.getNombre(),
+                        c.getNivel(),
+                        c.getParalelo(),
+                        c.getAlumnos().size()
+                )).toList();
     }
 
     @Override
-    public Curso buscarPorId(Long id) {
-        return repo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
+    public CursoResponseDTO buscar(Long id) {
+        Curso c = repo.findById(id).orElseThrow();
+        return new CursoResponseDTO(
+                c.getId(), c.getNombre(), c.getNivel(), c.getParalelo(), c.getAlumnos().size()
+        );
     }
 
     @Override
-    public Curso crear(CursoCreateDTO dto) {
-        Curso c = Curso.builder()
-                .nombre(dto.getNombre())
-                .nivel(dto.getNivel())
-                .paralelo(dto.getParalelo())
-                .build();
-
-        return repo.save(c);
+    public CursoResponseDTO crear(CursoCreateDTO dto) {
+        Curso c = repo.save(
+                Curso.builder()
+                        .nombre(dto.getNombre())
+                        .nivel(dto.getNivel())
+                        .paralelo(dto.getParalelo())
+                        .build()
+        );
+        return buscar(c.getId());
     }
 
     @Override
-    public Curso actualizar(Long id, CursoUpdateDTO dto) {
-        Curso c = buscarPorId(id);
-
+    public CursoResponseDTO actualizar(Long id, CursoUpdateDTO dto) {
+        Curso c = repo.findById(id).orElseThrow();
         c.setNombre(dto.getNombre());
         c.setNivel(dto.getNivel());
         c.setParalelo(dto.getParalelo());
-
-        return repo.save(c);
+        repo.save(c);
+        return buscar(id);
     }
 
     @Override
     public void eliminar(Long id) {
-        if (!repo.existsById(id))
-            throw new RuntimeException("Curso no existe");
-
         repo.deleteById(id);
+    }
+
+    @Override
+    public List<?> listarEstudiantes(Long cursoId) {
+        return alumnoRepo.findByCurso_Id(cursoId);
     }
 }

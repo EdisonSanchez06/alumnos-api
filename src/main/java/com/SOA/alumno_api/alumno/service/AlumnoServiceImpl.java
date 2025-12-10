@@ -24,23 +24,24 @@ public class AlumnoServiceImpl implements AlumnoService {
     }
 
     @Override
-    public Alumno buscarPorCedula(String cedula) {
-        return alumnoRepo.findById(cedula)
-                .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
+    public Alumno buscar(String cedula) {
+        return alumnoRepo.findById(cedula).orElseThrow();
     }
 
     @Override
     public Alumno crear(AlumnoCreateDto dto) {
-        if (alumnoRepo.existsById(dto.estCed()))
-            throw new RuntimeException("El alumno ya existe");
+
+        Curso curso = null;
+        if (dto.cursoId() != null)
+            curso = cursoRepo.findById(dto.cursoId()).orElseThrow();
 
         Alumno a = Alumno.builder()
                 .estCed(dto.estCed())
                 .estNom(dto.estNom())
                 .estApe(dto.estApe())
-                .estDir(dto.estDir())
                 .estTel(dto.estTel())
-                .curso(null)
+                .estDir(dto.estDir())
+                .curso(curso)
                 .build();
 
         return alumnoRepo.save(a);
@@ -48,12 +49,15 @@ public class AlumnoServiceImpl implements AlumnoService {
 
     @Override
     public Alumno actualizar(String cedula, AlumnoUpdateDto dto) {
-        Alumno a = buscarPorCedula(cedula);
+        Alumno a = buscar(cedula);
 
         a.setEstNom(dto.estNom());
         a.setEstApe(dto.estApe());
         a.setEstDir(dto.estDir());
         a.setEstTel(dto.estTel());
+
+        if (dto.cursoId() != null)
+            a.setCurso(cursoRepo.findById(dto.cursoId()).orElseThrow());
 
         return alumnoRepo.save(a);
     }
@@ -63,33 +67,8 @@ public class AlumnoServiceImpl implements AlumnoService {
         alumnoRepo.deleteById(cedula);
     }
 
-    // ===================== ASIGNACIONES ======================
-
     @Override
-    public Alumno asignarCurso(String cedula, Long cursoId) {
-        Alumno a = buscarPorCedula(cedula);
-        Curso c = cursoRepo.findById(cursoId)
-                .orElseThrow(() -> new RuntimeException("Curso no existe"));
-
-        a.setCurso(c);
-        return alumnoRepo.save(a);
-    }
-
-    @Override
-    public List<Alumno> obtenerAlumnosPorCurso(Long cursoId) {
-        Curso c = cursoRepo.findById(cursoId)
-                .orElseThrow(() -> new RuntimeException("Curso no existe"));
-
-        return alumnoRepo.findByCurso(c);
-    }
-
-    @Override
-    public Curso obtenerCursoDeAlumno(String cedula) {
-        Alumno a = buscarPorCedula(cedula);
-
-        if (a.getCurso() == null)
-            throw new RuntimeException("El alumno no tiene curso asignado");
-
-        return a.getCurso();
+    public Curso obtenerCurso(String cedula) {
+        return buscar(cedula).getCurso();
     }
 }

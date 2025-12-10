@@ -14,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/alumnos")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"*"})
+@CrossOrigin("*")
 public class AlumnoController {
 
     private final AlumnoService service;
@@ -24,44 +24,31 @@ public class AlumnoController {
         return service.listar();
     }
 
-    @GetMapping("/{cedula}")
-    public Alumno obtener(@PathVariable String cedula) {
-        return service.buscarPorCedula(cedula);
+    @GetMapping("/{ced}")
+    public Alumno obtener(@PathVariable String ced) {
+        return service.buscar(ced);
+    }
+
+    @GetMapping("/{ced}/curso")
+    public Curso cursoDeAlumno(@PathVariable String ced) {
+        return service.obtenerCurso(ced);
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Alumno crear(@Valid @RequestBody AlumnoCreateDto dto) {
+    public Alumno crear(@RequestBody AlumnoCreateDto dto) {
         return service.crear(dto);
     }
 
-    @PutMapping("/{cedula}")
-    public Alumno actualizar(@PathVariable String cedula,
-                             @Valid @RequestBody AlumnoUpdateDto dto) {
-        return service.actualizar(cedula, dto);
+    @PutMapping("/{ced}")
+    public Alumno actualizar(
+            @PathVariable String ced,
+            @RequestBody AlumnoUpdateDto dto
+    ) {
+        return service.actualizar(ced, dto);
     }
 
-    @DeleteMapping("/{cedula}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminar(@PathVariable String cedula) {
-        service.eliminar(cedula);
-    }
-
-    // ===================== ENDPOINTS NUEVOS =====================
-
-    @PutMapping("/{cedula}/curso/{cursoId}")
-    public Alumno asignarCurso(@PathVariable String cedula,
-                               @PathVariable Long cursoId) {
-        return service.asignarCurso(cedula, cursoId);
-    }
-
-    @GetMapping("/curso/{cursoId}")
-    public List<Alumno> alumnosDeCurso(@PathVariable Long cursoId) {
-        return service.obtenerAlumnosPorCurso(cursoId);
-    }
-
-    @GetMapping("/{cedula}/curso")
-    public Curso cursoDeAlumno(@PathVariable String cedula) {
-        return service.obtenerCursoDeAlumno(cedula);
+    @DeleteMapping("/{ced}")
+    public void eliminar(@PathVariable String ced) {
+        service.eliminar(ced);
     }
 }
