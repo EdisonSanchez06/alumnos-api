@@ -32,10 +32,20 @@ public class CursoServiceImpl implements CursoService {
     @Override
     public Curso crear(CursoCreateDTO dto) {
 
+        String nombre = dto.getNombre().trim();
+        String nivel = dto.getNivel().trim().toLowerCase(); // normalizar
+        String paralelo = dto.getParalelo().trim().toUpperCase(); // normalizar
+
+        // 🔥 VALIDACIÓN: evitar cursos duplicados
+        if (cursoRepo.existsByNombreIgnoreCaseAndNivelIgnoreCaseAndParaleloIgnoreCase(
+                nombre, nivel, paralelo)) {
+            throw new RuntimeException("Ya existe un curso con ese nombre, nivel y paralelo.");
+        }
+
         Curso c = Curso.builder()
-                .nombre(dto.getNombre())
-                .nivel(dto.getNivel())
-                .paralelo(dto.getParalelo())
+                .nombre(nombre)
+                .nivel(nivel)
+                .paralelo(paralelo)
                 .build();
 
         return cursoRepo.save(c);
@@ -46,9 +56,19 @@ public class CursoServiceImpl implements CursoService {
 
         Curso c = buscarPorId(id);
 
-        c.setNombre(dto.getNombre());
-        c.setNivel(dto.getNivel());
-        c.setParalelo(dto.getParalelo());
+        String nombre = dto.getNombre().trim();
+        String nivel = dto.getNivel().trim().toLowerCase();
+        String paralelo = dto.getParalelo().trim().toUpperCase();
+
+        // 🔥 VALIDACIÓN: evitar duplicados al editar
+        if (cursoRepo.existsByNombreIgnoreCaseAndNivelIgnoreCaseAndParaleloIgnoreCaseAndIdNot(
+                nombre, nivel, paralelo, id)) {
+            throw new RuntimeException("Ya existe otro curso con ese nombre, nivel y paralelo.");
+        }
+
+        c.setNombre(nombre);
+        c.setNivel(nivel);
+        c.setParalelo(paralelo);
 
         return cursoRepo.save(c);
     }

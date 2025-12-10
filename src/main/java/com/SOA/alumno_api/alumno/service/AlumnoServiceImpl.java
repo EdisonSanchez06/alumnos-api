@@ -42,11 +42,18 @@ public class AlumnoServiceImpl implements AlumnoService {
         a.setEstDir(dto.estDir());
         a.setEstTel(dto.estTel());
 
-        // Se crea sin curso asignado inicialmente
-        a.setCurso(null);
+
+        if (dto.cursoId() != null) {
+            Curso c = cursoRepo.findById(dto.cursoId())
+                    .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
+            a.setCurso(c);
+        } else {
+            a.setCurso(null);
+        }
 
         return alumnoRepo.save(a);
     }
+
 
     @Override
     public Alumno actualizar(String cedula, AlumnoUpdateDto dto) {
@@ -58,7 +65,7 @@ public class AlumnoServiceImpl implements AlumnoService {
         a.setEstDir(dto.estDir());
         a.setEstTel(dto.estTel());
 
-        
+
         if (dto.cursoId() != null) {
             Curso c = cursoRepo.findById(dto.cursoId())
                     .orElseThrow(() -> new RuntimeException("Curso no encontrado"));

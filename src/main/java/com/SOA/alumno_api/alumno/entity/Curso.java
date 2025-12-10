@@ -7,8 +7,16 @@ import lombok.*;
 import java.util.List;
 
 @Entity
-@Table(name = "cursos")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(
+        name = "cursos",
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = {"nombre", "nivel", "paralelo"}
+        )
+)
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Curso {
 
     @Id
@@ -18,8 +26,4 @@ public class Curso {
     private String nombre;
     private String nivel;
     private String paralelo;
-
-    @OneToMany(mappedBy = "curso")
-    @JsonIgnore // evita ciclos infinitos al devolver JSON
-    private List<Alumno> alumnos;
 }

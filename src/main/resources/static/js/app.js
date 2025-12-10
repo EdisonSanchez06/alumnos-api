@@ -165,16 +165,20 @@ function validarDireccion(dir) {
 }
 
 function validarNombreCurso(txt) {
-  return /^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ]{3,40}$/.test(txt);
+  // Solo letras (con tildes) y espacios, entre 3 y 40 caracteres
+  return /^[A-Za-zÁÉÍÓÚÑáéíóúñ ]{3,40}$/.test(txt);
 }
+
 
 function validarNivel(niv) {
-  return niv.trim().length >= 1;
+  return /^[A-Za-zÁÉÍÓÚÑáéíóúñ ]{1,20}$/.test(niv);
 }
 
+
 function validarParalelo(par) {
-  return /^[A-Za-z0-9]{1,3}$/.test(par);
+  return /^[A-Z]{1}$/.test(par);
 }
+
 
 function attachLiveValidation(form) {
   const inputs = form.querySelectorAll(
@@ -806,34 +810,41 @@ async function crearCurso(e) {
   const data = {
     nombre: f.nombre.value.trim(),
     nivel: f.nivel.value.trim(),
-    paralelo: f.paralelo.value.trim(),
+    paralelo: f.paralelo.value.trim().toUpperCase(), // 🔥 normalizamos
   };
 
   if (!validarNombreCurso(data.nombre))
-    return toast("Nombre inválido", "warning");
+    return toast("Nombre de curso inválido (solo letras, mínimo 3)", "warning");
   if (!validarNivel(data.nivel)) return toast("Nivel inválido", "warning");
   if (!validarParalelo(data.paralelo))
     return toast("Paralelo inválido", "warning");
 
-  try {
-    const resp = await fetch(API_CURSOS, {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
-    if (!resp.ok) throw new Error();
+ try {
+     const resp = await fetch(API_CURSOS, {
+         method: "POST",
+         headers: getHeaders(),
+         body: JSON.stringify(data),
+     });
 
-    toast("Curso creado ✔️", "success");
-    bootstrap.Modal.getInstance(
-      document.getElementById("modalCrearCurso")
-    ).hide();
+     if (!resp.ok) {
+         const msg = await resp.text();
+         throw new Error(msg);
+     }
 
-    await cargarCursos();
-    renderCursos();
-  } catch {
-    toast("Error creando curso", "error");
-  }
+     toast("Curso creado ✔️", "success");
+     bootstrap.Modal.getInstance(
+         document.getElementById("modalCrearCurso")
+     ).hide();
+
+     await cargarCursos();
+     renderCursos();
+
+ } catch (err) {
+     toast(err.message || "Error creando curso", "error");
+ }
+
 }
+
 
 // ----- Editar curso -----
 
@@ -870,11 +881,11 @@ async function actualizarCurso(e) {
   const data = {
     nombre: f.nombreE.value.trim(),
     nivel: f.nivelE.value.trim(),
-    paralelo: f.paraleloE.value.trim(),
+    paralelo: f.paraleloE.value.trim().toUpperCase(),
   };
 
   if (!validarNombreCurso(data.nombre))
-    return toast("Nombre inválido", "warning");
+    return toast("Nombre de curso inválido (solo letras, mínimo 3)", "warning");
   if (!validarNivel(data.nivel)) return toast("Nivel inválido", "warning");
   if (!validarParalelo(data.paralelo))
     return toast("Paralelo inválido", "warning");
@@ -885,7 +896,10 @@ async function actualizarCurso(e) {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!resp.ok) throw new Error();
+    if (!resp.ok) {
+      const msg = await resp.text();
+      throw new Error(msg || "Error actualizando curso");
+    }
 
     toast("Curso actualizado ✔️", "success");
     bootstrap.Modal.getInstance(
@@ -894,10 +908,11 @@ async function actualizarCurso(e) {
 
     await cargarCursos();
     renderCursos();
-  } catch {
-    toast("Error actualizando curso", "error");
+  } catch (err) {
+    toast(err.message || "Error actualizando curso", "error");
   }
 }
+
 
 // ----- Eliminar curso -----
 
