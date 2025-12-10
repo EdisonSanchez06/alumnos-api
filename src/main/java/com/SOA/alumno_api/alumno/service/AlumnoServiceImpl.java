@@ -58,6 +58,13 @@ public class AlumnoServiceImpl implements AlumnoService {
         a.setEstDir(dto.estDir());
         a.setEstTel(dto.estTel());
 
+        
+        if (dto.cursoId() != null) {
+            Curso c = cursoRepo.findById(dto.cursoId())
+                    .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
+            a.setCurso(c);
+        }
+
         return alumnoRepo.save(a);
     }
 

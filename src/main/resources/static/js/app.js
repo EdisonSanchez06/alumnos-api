@@ -208,10 +208,7 @@ function getAlumnoCursoId(a) {
 
 function getCursoById(id) {
   if (!id || !Array.isArray(cursosData)) return null;
-  return (
-    cursosData.find((c) => String(c.id) === String(id)) ||
-    null
-  );
+  return cursosData.find((c) => String(c.id) === String(id)) || null;
 }
 
 // devuelve etiqueta bonita del curso
@@ -227,6 +224,124 @@ function getCursoLabel(source) {
 
   if (!curso) return "Sin curso";
   return `${curso.nombre} (${curso.nivel}-${curso.paralelo})`;
+}
+
+// ---------- SELECTS DEPENDIENTES (Nivel → Paralelo → Materia) ----------
+
+function getNivelesUnicos() {
+  const set = new Set();
+  cursosData.forEach((c) => {
+    if (c.nivel) set.add(c.nivel);
+  });
+  return Array.from(set);
+}
+
+function getParalelosPorNivel(nivel) {
+  const set = new Set();
+  cursosData
+    .filter((c) => c.nivel === nivel)
+    .forEach((c) => {
+      if (c.paralelo) set.add(c.paralelo);
+    });
+  return Array.from(set);
+}
+
+function getCursosPorNivelParalelo(nivel, paralelo) {
+  return cursosData.filter(
+    (c) => c.nivel === nivel && c.paralelo === paralelo
+  );
+}
+
+function cargarNiveles(tipo) {
+  const select = document.getElementById(`nivelSelect${tipo}`);
+  if (!select) return;
+
+  const niveles = getNivelesUnicos();
+
+  select.innerHTML =
+    `<option value="">Seleccione nivel</option>` +
+    niveles.map((n) => `<option value="${n}">${n}</option>`).join("");
+
+  const parSel = document.getElementById(`paraleloSelect${tipo}`);
+  const matSel = document.getElementById(`materiaSelect${tipo}`);
+  if (parSel)
+    parSel.innerHTML = `<option value="">Seleccione paralelo</option>`;
+  if (matSel)
+    matSel.innerHTML = `<option value="">Seleccione materia</option>`;
+}
+
+function cargarParalelos(tipo) {
+  const nivelSel = document.getElementById(`nivelSelect${tipo}`);
+  const parSel = document.getElementById(`paraleloSelect${tipo}`);
+  const matSel = document.getElementById(`materiaSelect${tipo}`);
+
+  if (!nivelSel || !parSel || !matSel) return;
+
+  const nivel = nivelSel.value;
+  const paralelos = nivel ? getParalelosPorNivel(nivel) : [];
+
+  parSel.innerHTML =
+    `<option value="">Seleccione paralelo</option>` +
+    paralelos.map((p) => `<option value="${p}">${p}</option>`).join("");
+
+  matSel.innerHTML = `<option value="">Seleccione materia</option>`;
+}
+
+function cargarMaterias(tipo) {
+  const nivelSel = document.getElementById(`nivelSelect${tipo}`);
+  const parSel = document.getElementById(`paraleloSelect${tipo}`);
+  const matSel = document.getElementById(`materiaSelect${tipo}`);
+
+  if (!nivelSel || !parSel || !matSel) return;
+
+  const nivel = nivelSel.value;
+  const paralelo = parSel.value;
+
+  const cursos = nivel && paralelo ? getCursosPorNivelParalelo(nivel, paralelo) : [];
+
+  matSel.innerHTML =
+    `<option value="">Seleccione materia</option>` +
+    cursos
+      .map(
+        (c) =>
+          `<option value="${c.id}">${c.nombre}</option>`
+      )
+      .join("");
+}
+
+function initCursoSelectsCrear() {
+  if (!cursosData.length) return;
+  const nivelSel = document.getElementById("nivelSelectC");
+  if (!nivelSel) return;
+  cargarNiveles("C");
+}
+
+function initCursoSelectsEditarBase() {
+  if (!cursosData.length) return;
+  const nivelSel = document.getElementById("nivelSelectE");
+  if (!nivelSel) return;
+  cargarNiveles("E");
+}
+
+function initCursoSelectsEditarConCurso(curso) {
+  if (!curso) {
+    initCursoSelectsEditarBase();
+    return;
+  }
+
+  const nivelSel = document.getElementById("nivelSelectE");
+  const parSel = document.getElementById("paraleloSelectE");
+  const matSel = document.getElementById("materiaSelectE");
+  if (!nivelSel || !parSel || !matSel) return;
+
+  cargarNiveles("E");
+  nivelSel.value = curso.nivel || "";
+
+  cargarParalelos("E");
+  parSel.value = curso.paralelo || "";
+
+  cargarMaterias("E");
+  matSel.value = curso.id || "";
 }
 
 // ======================================================================
@@ -317,12 +432,12 @@ function renderAlumnos() {
         <td>${a.estTel}</td>
         <td>${a.estDir}</td>
         <td>${getCursoLabel(a)}</td>
-        <td class="text-center">
-          <button class="btn btn-sm btn-outline-info me-1"
+        <td class="d-flex justify-content-center align-items-center gap-2">
+          <button class="btn btn-sm btn-outline-info"
             onclick="verCursoDeAlumno('${a.estCed}')">
             Ver curso
           </button>
-          <button class="btn btn-sm btn-warning me-1"
+          <button class="btn btn-sm btn-warning"
             onclick="abrirModalEditarAlumno('${a.estCed}')">
             Editar
           </button>
@@ -371,20 +486,6 @@ function alumnosCambioFiltros() {
 
 // ----- Crear alumno -----
 
-function cargarSelectCursos(select) {
-  if (!select) return;
-  select.innerHTML =
-    `<option value="">Seleccione un curso</option>` +
-    cursosData
-      .map(
-        (c) =>
-          `<option value="${c.id}">
-            ${c.nombre} (${c.nivel}-${c.paralelo})
-          </option>`
-      )
-      .join("");
-}
-
 function abrirModalCrearAlumno() {
   const form = document.getElementById("formCrearAlumno");
   if (!form) return;
@@ -392,7 +493,9 @@ function abrirModalCrearAlumno() {
   form.reset();
   clearValidation(form);
   attachLiveValidation(form);
-  cargarSelectCursos(form.cursoId);
+
+  // inicializar selects dependientes
+  initCursoSelectsCrear();
 
   new bootstrap.Modal(document.getElementById("modalCrearAlumno")).show();
 }
@@ -401,13 +504,17 @@ async function crearAlumno(e) {
   e.preventDefault();
   const f = e.target;
 
+  const cursoIdValue = document.getElementById("materiaSelectC")
+    ? document.getElementById("materiaSelectC").value
+    : "";
+
   const data = {
     estCed: f.estCed.value.trim(),
     estNom: f.estNom.value.trim(),
     estApe: f.estApe.value.trim(),
     estTel: f.estTel.value.trim(),
     estDir: f.estDir.value.trim(),
-    cursoId: Number(f.cursoId.value),
+    cursoId: Number(cursoIdValue),
   };
 
   if (!validarCedulaEcuatoriana(data.estCed))
@@ -456,19 +563,19 @@ async function abrirModalEditarAlumno(ced) {
     const form = document.getElementById("formEditarAlumno");
     if (!form) return;
 
-    cargarSelectCursos(form.cursoIdE);
-
     form.estCedE.value = a.estCed;
     form.estNomE.value = a.estNom;
     form.estApeE.value = a.estApe;
     form.estTelE.value = a.estTel || "";
     form.estDirE.value = a.estDir || "";
 
-    const cursoId = getAlumnoCursoId(a);
-    if (cursoId) form.cursoIdE.value = cursoId;
-
     clearValidation(form);
     attachLiveValidation(form);
+
+    // inicializar selects dependientes con el curso actual
+    const cursoId = getAlumnoCursoId(a);
+    const curso = getCursoById(cursoId) || a.curso || null;
+    initCursoSelectsEditarConCurso(curso);
 
     new bootstrap.Modal(document.getElementById("modalEditarAlumno")).show();
   } catch {
@@ -480,12 +587,16 @@ async function actualizarAlumno(e) {
   e.preventDefault();
   const f = e.target;
 
+  const cursoIdValue = document.getElementById("materiaSelectE")
+    ? document.getElementById("materiaSelectE").value
+    : "";
+
   const data = {
     estNom: f.estNomE.value.trim(),
     estApe: f.estApeE.value.trim(),
     estTel: f.estTelE.value.trim(),
     estDir: f.estDirE.value.trim(),
-    cursoId: Number(f.cursoIdE.value),
+    cursoId: Number(cursoIdValue),
   };
 
   if (!validarNombrePersona(data.estNom))
@@ -937,6 +1048,11 @@ async function initAlumnosPage() {
 
   await cargarCursos();
   await cargarAlumnos();
+
+  // preparar selects dependientes para crear/editar
+  initCursoSelectsCrear();
+  initCursoSelectsEditarBase();
+
   renderAlumnos();
 
   const navUser = document.getElementById("userNameNav");

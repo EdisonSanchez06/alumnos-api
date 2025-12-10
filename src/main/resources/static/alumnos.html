@@ -43,7 +43,6 @@
             border-radius: 10px;
         }
 
-        /* Alinear acciones */
         .td-actions {
             display: flex;
             gap: 6px;
@@ -60,12 +59,11 @@
 
         <a class="navbar-brand fw-bold" href="#">📘 Sistema Escolar</a>
 
-        <!-- BOTONES DE NAVEGACIÓN -->
         <div class="d-flex align-items-center gap-3 ms-auto">
 
-            <a href="dashboard.html" class="btn btn-outline-light btn-sm">Dashboard</a>
+            <a href="dashboard.html" class="btn btn-outline-light btn-sm admin-only">Dashboard</a>
             <a href="alumnos.html" class="btn btn-light btn-sm fw-bold">Alumnos</a>
-            <a href="cursos.html" class="btn btn-outline-light btn-sm">Cursos</a>
+            <a href="cursos.html" class="btn btn-outline-light btn-sm admin-only">Cursos</a>
 
             <span id="userNameNav" class="text-white fw-bold"></span>
 
@@ -153,30 +151,51 @@
             </div>
 
             <div class="modal-body">
+
                 <div class="mb-2">
                     <label>Cédula</label>
                     <input name="estCed" type="text" class="form-control" required>
                 </div>
+
                 <div class="mb-2">
                     <label>Nombre</label>
                     <input name="estNom" type="text" class="form-control" required>
                 </div>
+
                 <div class="mb-2">
                     <label>Apellido</label>
                     <input name="estApe" type="text" class="form-control" required>
                 </div>
+
                 <div class="mb-2">
                     <label>Teléfono</label>
                     <input name="estTel" type="text" class="form-control" required>
                 </div>
+
                 <div class="mb-2">
                     <label>Dirección</label>
                     <input name="estDir" type="text" class="form-control" required>
                 </div>
+
+                <hr>
+
+                <h6 class="fw-bold mt-3">Asignar Curso</h6>
+
                 <div class="mb-2">
-                    <label>Curso</label>
-                    <select name="cursoId" class="form-select" required></select>
+                    <label>Nivel</label>
+                    <select id="nivelSelectC" class="form-select" required onchange="cargarParalelos('C')"></select>
                 </div>
+
+                <div class="mb-2">
+                    <label>Paralelo</label>
+                    <select id="paraleloSelectC" class="form-select" required onchange="cargarMaterias('C')"></select>
+                </div>
+
+                <div class="mb-2">
+                    <label>Materia</label>
+                    <select id="materiaSelectC" class="form-select" required></select>
+                </div>
+
             </div>
 
             <div class="modal-footer">
@@ -196,28 +215,48 @@
             </div>
 
             <div class="modal-body">
+
                 <input type="hidden" name="estCedE">
 
                 <div class="mb-2">
                     <label>Nombre</label>
                     <input name="estNomE" type="text" class="form-control" required>
                 </div>
+
                 <div class="mb-2">
                     <label>Apellido</label>
                     <input name="estApeE" type="text" class="form-control" required>
                 </div>
+
                 <div class="mb-2">
                     <label>Teléfono</label>
                     <input name="estTelE" type="text" class="form-control" required>
                 </div>
+
                 <div class="mb-2">
                     <label>Dirección</label>
                     <input name="estDirE" type="text" class="form-control" required>
                 </div>
+
+                <hr>
+
+                <h6 class="fw-bold mt-3">Cambiar Curso</h6>
+
                 <div class="mb-2">
-                    <label>Curso</label>
-                    <select name="cursoIdE" class="form-select" required></select>
+                    <label>Nivel</label>
+                    <select id="nivelSelectE" class="form-select" required onchange="cargarParalelos('E')"></select>
                 </div>
+
+                <div class="mb-2">
+                    <label>Paralelo</label>
+                    <select id="paraleloSelectE" class="form-select" required onchange="cargarMaterias('E')"></select>
+                </div>
+
+                <div class="mb-2">
+                    <label>Materia</label>
+                    <select id="materiaSelectE" class="form-select" required></select>
+                </div>
+
             </div>
 
             <div class="modal-footer">
@@ -230,6 +269,14 @@
 <!-- SCRIPTS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/app.js"></script>
+
+<script>
+    // Ocultar botones restringidos para SECRETARIA
+    const role = localStorage.getItem("role");
+    if (role !== "ADMIN") {
+        document.querySelectorAll(".admin-only").forEach(el => el.style.display = "none");
+    }
+</script>
 
 </body>
 </html>
