@@ -32,13 +32,23 @@ public class SecurityConfig {
                                 "/",
                                 "/index.html",
                                 "/login.html",
+                                "/favicon.ico",
+
+                                // Archivos estáticos reales
                                 "/css/**",
                                 "/js/**",
-                                "/img/**",
-                                "/assets/**",
-                                "/static/**",
-                                "/favicon.ico"
+                                "/images/**",
+                                "/webjars/**",
+
+                                // Cualquier recurso estático servido automáticamente
+                                "/**/*.css",
+                                "/**/*.js",
+                                "/**/*.png",
+                                "/**/*.jpg",
+                                "/**/*.svg",
+                                "/**/*.ico"
                         ).permitAll()
+
 
                         // ==========================
                         // ALUMNOS
