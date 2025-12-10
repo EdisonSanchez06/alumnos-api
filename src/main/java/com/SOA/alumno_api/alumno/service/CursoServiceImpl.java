@@ -57,10 +57,10 @@ public class CursoServiceImpl implements CursoService {
     public void eliminar(Long id) {
         Curso c = buscarPorId(id);
 
-        // No permitir eliminar si tiene alumnos asignados
         long cant = alumnoRepo.countByCurso(c);
-        if (cant > 0)
-            throw new RuntimeException("No se puede eliminar. Curso tiene alumnos asignados.");
+        if (cant > 0) {
+            throw new RuntimeException("No se puede eliminar. El curso tiene alumnos asignados.");
+        }
 
         cursoRepo.delete(c);
     }

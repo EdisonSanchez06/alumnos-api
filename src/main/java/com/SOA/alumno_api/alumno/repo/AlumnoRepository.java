@@ -8,8 +8,9 @@ import java.util.List;
 
 public interface AlumnoRepository extends JpaRepository<Alumno, String> {
 
+    boolean existsByEstCed(String estCed);
+
     List<Alumno> findByCurso(Curso curso);
 
     long countByCurso(Curso curso);
-
 }

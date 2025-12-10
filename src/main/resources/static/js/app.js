@@ -38,10 +38,9 @@ function loadTheme() {
 }
 
 function toggleTheme() {
-  const current = document.documentElement.getAttribute("data-theme") || "light";
-  const next = current === "light" ? "dark" : "light";
-  document.documentElement.setAttribute("data-theme", next);
-  localStorage.setItem("theme", next);
+  const theme = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("theme", theme);
 }
 
 function toast(message, icon = "info") {
@@ -78,14 +77,11 @@ async function login(e) {
   const user = e.target.usuario.value.trim();
   const pass = e.target.clave.value.trim();
 
-  if (!user || !pass) {
-    return toast("Debe ingresar usuario y contraseña", "warning");
-  }
+  if (!user || !pass) return toast("Debe ingresar usuario y contraseña", "warning");
 
   const basic = "Basic " + btoa(user + ":" + pass);
 
   try {
-    // Llamamos a /auth/login para saber usuario + rol
     const resp = await fetch(API_BASE + "/auth/login", {
       headers: { Authorization: basic },
     });
@@ -100,14 +96,10 @@ async function login(e) {
 
     toast("Bienvenido " + data.user, "success");
 
-    if (data.role.toUpperCase() === "ADMIN") {
-      location.href = "dashboard.html";
-    } else {
-      location.href = "alumnos.html";
-    }
+    location.href = data.role === "ADMIN" ? "dashboard.html" : "alumnos.html";
+
   } catch (err) {
-    console.error(err);
-    toast(err.message || "Error de autenticación", "error");
+    toast(err.message, "error");
   }
 }
 
@@ -116,21 +108,15 @@ function logout() {
   location.href = "login.html";
 }
 
-function getRole() {
-  return localStorage.getItem("role");
-}
-
 function ensureAuth() {
-  if (!localStorage.getItem("auth")) {
-    location.href = "login.html";
-  }
+  if (!localStorage.getItem("auth")) location.href = "login.html";
 }
 
 function ensureAdmin() {
   ensureAuth();
-  if (getRole() !== "ADMIN") {
-    toast("Solo el administrador puede acceder aquí", "error");
-    setTimeout(() => (location.href = "alumnos.html"), 1500);
+  if (localStorage.getItem("role") !== "ADMIN") {
+    toast("No permitido", "error");
+    setTimeout(() => (location.href = "alumnos.html"), 1200);
   }
 }
 
@@ -138,14 +124,13 @@ function ensureAdmin() {
 // ========================= VALIDACIONES ===============================
 // ======================================================================
 
-// Cédula ecuatoriana (10 dígitos)
 function validarCedulaEcuatoriana(ced) {
   if (!/^\d{10}$/.test(ced)) return false;
 
   const provincia = parseInt(ced.substring(0, 2), 10);
   if (provincia < 1 || provincia > 24) return false;
 
-  const digitoVerificador = parseInt(ced[9]);
+  const digitoV = parseInt(ced[9]);
   let suma = 0;
 
   for (let i = 0; i < 9; i++) {
@@ -157,17 +142,14 @@ function validarCedulaEcuatoriana(ced) {
     suma += valor;
   }
 
-  const decenaSuperior = Math.ceil(suma / 10) * 10;
-  const digitoCalculado = decenaSuperior - suma;
+  const decena = Math.ceil(suma / 10) * 10;
+  const digitoCalc = decena - suma;
 
-  return (
-    digitoCalculado === digitoVerificador ||
-    (digitoCalculado === 10 && digitoVerificador === 0)
-  );
+  return (digitoCalc === digitoV || (digitoCalc === 10 && digitoV === 0));
 }
 
-function validarNombrePersona(texto) {
-  return /^[A-Za-zÁÉÍÓÚÑáéíóúñ ]{2,40}$/.test(texto);
+function validarNombrePersona(txt) {
+  return /^[A-Za-zÁÉÍÓÚÑáéíóúñ ]{2,40}$/.test(txt);
 }
 
 function validarTelefono(tel) {
@@ -175,36 +157,29 @@ function validarTelefono(tel) {
 }
 
 function validarDireccion(dir) {
-  return dir && dir.trim().length >= 5;
+  return dir.trim().length >= 5;
 }
 
-function validarNombreCurso(texto) {
-  return /^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ]{3,40}$/.test(texto);
+function validarNombreCurso(txt) {
+  return /^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ]{3,40}$/.test(txt);
 }
 
-function validarNivel(nivel) {
-  // Ej: "1ro", "2do", "3ro", "Básico", "Inicial", etc.
-  return nivel && nivel.trim().length >= 2;
+function validarNivel(niv) {
+  return niv.trim().length >= 1;
 }
 
-function validarParalelo(p) {
-  // Ej: "A", "B", "C"
-  return /^[A-Za-z0-9]{1,3}$/.test(p);
+function validarParalelo(par) {
+  return /^[A-Za-z0-9]{1,3}$/.test(par);
 }
 
 function attachLiveValidation(form) {
   const inputs = form.querySelectorAll("input[required], textarea[required], select[required]");
-  inputs.forEach((i) => {
+  inputs.forEach((i) =>
     i.addEventListener("input", () => {
-      if (!i.value.trim()) {
-        i.classList.add("is-invalid");
-        i.classList.remove("is-valid");
-      } else {
-        i.classList.add("is-valid");
-        i.classList.remove("is-invalid");
-      }
-    });
-  });
+      i.classList.toggle("is-invalid", !i.value.trim());
+      i.classList.toggle("is-valid", i.value.trim());
+    })
+  );
 }
 
 function clearValidation(form) {
@@ -214,81 +189,14 @@ function clearValidation(form) {
 }
 
 // ======================================================================
-// ========================= PAGINACIÓN / FILTROS =======================
-// ======================================================================
-
-function paginate(arr, page, size) {
-  const start = (page - 1) * size;
-  return arr.slice(start, start + size);
-}
-
-function applyAlumnosFilters() {
-  let result = [...alumnosData];
-
-  if (alumnosFilters.cedula)
-    result = result.filter((a) => a.estCed.includes(alumnosFilters.cedula));
-
-  if (alumnosFilters.nombre)
-    result = result.filter((a) =>
-      a.estNom.toLowerCase().includes(alumnosFilters.nombre.toLowerCase())
-    );
-
-  if (alumnosFilters.apellido)
-    result = result.filter((a) =>
-      a.estApe.toLowerCase().includes(alumnosFilters.apellido.toLowerCase())
-    );
-
-  if (alumnosSearch) {
-    const q = alumnosSearch.toLowerCase();
-    result = result.filter((a) =>
-      `${a.estCed} ${a.estNom} ${a.estApe} ${a.estTel} ${a.estDir}`
-        .toLowerCase()
-        .includes(q)
-    );
-  }
-
-  return result;
-}
-
-function applyCursosFilters() {
-  let result = [...cursosData];
-
-  if (cursosFilters.nombre)
-    result = result.filter((c) =>
-      c.nombre.toLowerCase().includes(cursosFilters.nombre.toLowerCase())
-    );
-
-  if (cursosFilters.nivel)
-    result = result.filter((c) =>
-      (c.nivel || "").toLowerCase().includes(cursosFilters.nivel.toLowerCase())
-    );
-
-  if (cursosFilters.paralelo)
-    result = result.filter((c) =>
-      (c.paralelo || "").toLowerCase().includes(cursosFilters.paralelo.toLowerCase())
-    );
-
-  if (cursosSearch) {
-    const q = cursosSearch.toLowerCase();
-    result = result.filter((c) =>
-      `${c.id} ${c.nombre} ${c.nivel} ${c.paralelo}`.toLowerCase().includes(q)
-    );
-  }
-
-  return result;
-}
-
-// ======================================================================
 // ========================= CARGA GLOBAL ===============================
 // ======================================================================
 
 async function cargarAlumnos() {
   try {
     const resp = await fetch(API_ALUMNOS, { headers: getHeaders() });
-    if (!resp.ok) throw new Error("Error al cargar alumnos");
     alumnosData = await resp.json();
-  } catch (e) {
-    console.error(e);
+  } catch {
     toast("Error al cargar alumnos", "error");
   }
 }
@@ -296,19 +204,15 @@ async function cargarAlumnos() {
 async function cargarCursos() {
   try {
     const resp = await fetch(API_CURSOS, { headers: getHeaders() });
-    if (!resp.ok) throw new Error("Error al cargar cursos");
     cursosData = await resp.json();
-  } catch (e) {
-    console.error(e);
+  } catch {
     toast("Error al cargar cursos", "error");
   }
 }
 
-function getCursoLabelById(cursoId) {
-  if (!cursoId || !cursosData || cursosData.length === 0) return "Sin curso";
-  const c = cursosData.find((c) => c.id === cursoId);
-  if (!c) return "Sin curso";
-  return `${c.nombre} (${c.nivel}-${c.paralelo})`;
+function getCursoLabelById(id) {
+  const c = cursosData.find((x) => x.id === id);
+  return c ? `${c.nombre} (${c.nivel}-${c.paralelo})` : "Sin curso";
 }
 
 // ======================================================================
@@ -319,111 +223,83 @@ function renderAlumnos() {
   const tbody = document.getElementById("tbodyAlumnos");
   if (!tbody) return;
 
-  const filtered = applyAlumnosFilters();
-  const total = filtered.length;
+  let data = [...alumnosData];
+
+  // filtros
+  if (alumnosFilters.cedula)
+    data = data.filter((a) => a.estCed.includes(alumnosFilters.cedula));
+
+  if (alumnosFilters.nombre)
+    data = data.filter((a) =>
+      a.estNom.toLowerCase().includes(alumnosFilters.nombre.toLowerCase())
+    );
+
+  if (alumnosFilters.apellido)
+    data = data.filter((a) =>
+      a.estApe.toLowerCase().includes(alumnosFilters.apellido.toLowerCase())
+    );
+
+  if (alumnosSearch)
+    data = data.filter((a) =>
+      `${a.estCed} ${a.estNom} ${a.estApe}`.toLowerCase().includes(alumnosSearch.toLowerCase())
+    );
+
+  const total = data.length;
   const totalPages = Math.max(1, Math.ceil(total / alumnosPageSize));
 
   if (alumnosPage > totalPages) alumnosPage = totalPages;
 
-  const items = paginate(filtered, alumnosPage, alumnosPageSize);
+  const items = data.slice(
+    (alumnosPage - 1) * alumnosPageSize,
+    alumnosPage * alumnosPageSize
+  );
 
   tbody.innerHTML = items
-    .map((a) => {
-      const cursoLabel = getCursoLabelById(a.cursoId);
-      return `
-        <tr>
-          <td>${a.estCed}</td>
-          <td>${a.estNom}</td>
-          <td>${a.estApe}</td>
-          <td>${a.estTel || ""}</td>
-          <td>${a.estDir || ""}</td>
-          <td>${cursoLabel}</td>
-          <td class="text-center">
-            <button class="btn btn-sm btn-outline-info me-1"
-              onclick="verCursoDeAlumno('${a.estCed}')">
-              Ver curso
-            </button>
-            <button class="btn btn-sm btn-warning me-1"
-              onclick="abrirModalEditarAlumno('${a.estCed}')">
-              Editar
-            </button>
-            <button class="btn btn-sm btn-danger"
-              onclick="eliminarAlumno('${a.estCed}')">
-              Eliminar
-            </button>
-          </td>
-        </tr>
-      `;
-    })
+    .map(
+      (a) => `
+    <tr>
+      <td>${a.estCed}</td>
+      <td>${a.estNom}</td>
+      <td>${a.estApe}</td>
+      <td>${a.estTel}</td>
+      <td>${a.estDir}</td>
+      <td>${getCursoLabelById(a.cursoId)}</td>
+      <td class="text-center">
+        <button class="btn btn-sm btn-outline-info" onclick="verCursoDeAlumno('${a.estCed}')">Ver curso</button>
+        <button class="btn btn-sm btn-warning" onclick="abrirModalEditarAlumno('${a.estCed}')">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="eliminarAlumno('${a.estCed}')">Eliminar</button>
+      </td>
+    </tr>`
+    )
     .join("");
 
   const info = document.getElementById("alumnosPaginationInfo");
-  if (info) {
-    const start = total === 0 ? 0 : (alumnosPage - 1) * alumnosPageSize + 1;
-    const end = Math.min(alumnosPage * alumnosPageSize, total);
+  if (info)
     info.textContent = total
-      ? `Mostrando ${start}-${end} de ${total}`
+      ? `Mostrando ${items.length} de ${total}`
       : "Sin resultados";
-  }
-
-  const prev = document.getElementById("alumnosPrev");
-  const next = document.getElementById("alumnosNext");
-  if (prev) prev.disabled = alumnosPage <= 1;
-  if (next) next.disabled = alumnosPage >= totalPages;
-}
-
-function alumnosCambioPagina(n) {
-  alumnosPage += n;
-  renderAlumnos();
-}
-
-function alumnosCambioSearch(input) {
-  alumnosSearch = input.value.trim();
-  alumnosPage = 1;
-  renderAlumnos();
-}
-
-function alumnosCambioFiltros() {
-  const ced = document.getElementById("filterCedula");
-  const nom = document.getElementById("filterNombre");
-  const ape = document.getElementById("filterApellido");
-
-  alumnosFilters.cedula = ced ? ced.value.trim() : "";
-  alumnosFilters.nombre = nom ? nom.value.trim() : "";
-  alumnosFilters.apellido = ape ? ape.value.trim() : "";
-
-  alumnosPage = 1;
-  renderAlumnos();
 }
 
 // ---------- Crear Alumno ----------
 
 function cargarSelectCursos(select) {
-  if (!select) return;
   select.innerHTML =
-    `<option value="">-- Seleccione curso --</option>` +
+    `<option value="">Seleccione un curso</option>` +
     cursosData
       .map(
         (c) =>
-          `<option value="${c.id}">
-             ${c.nombre} (${c.nivel}-${c.paralelo})
-           </option>`
+          `<option value="${c.id}">${c.nombre} (${c.nivel}-${c.paralelo})</option>`
       )
       .join("");
 }
 
 function abrirModalCrearAlumno() {
-  const modalEl = document.getElementById("modalCrearAlumno");
   const form = document.getElementById("formCrearAlumno");
-  if (!modalEl || !form) return;
-
+  cargarSelectCursos(form.cursoId);
   form.reset();
   clearValidation(form);
   attachLiveValidation(form);
-  cargarSelectCursos(form.cursoId);
-
-  const modal = new bootstrap.Modal(modalEl);
-  modal.show();
+  new bootstrap.Modal(document.getElementById("modalCrearAlumno")).show();
 }
 
 async function crearAlumno(e) {
@@ -436,21 +312,15 @@ async function crearAlumno(e) {
     estApe: f.estApe.value.trim(),
     estTel: f.estTel.value.trim(),
     estDir: f.estDir.value.trim(),
-    cursoId: f.cursoId.value ? Number(f.cursoId.value) : null,
+    cursoId: Number(f.cursoId.value),
   };
 
-  if (!validarCedulaEcuatoriana(data.estCed))
-    return toast("Cédula inválida", "error");
-  if (!validarNombrePersona(data.estNom))
-    return toast("Nombre inválido", "warning");
-  if (!validarNombrePersona(data.estApe))
-    return toast("Apellido inválido", "warning");
-  if (!validarTelefono(data.estTel))
-    return toast("Teléfono inválido (10 dígitos)", "warning");
-  if (!validarDireccion(data.estDir))
-    return toast("Dirección demasiado corta", "warning");
-  if (!data.cursoId)
-    return toast("Debe seleccionar un curso", "warning");
+  if (!validarCedulaEcuatoriana(data.estCed)) return toast("Cédula inválida", "error");
+  if (!validarNombrePersona(data.estNom)) return toast("Nombre inválido", "error");
+  if (!validarNombrePersona(data.estApe)) return toast("Apellido inválido", "error");
+  if (!validarTelefono(data.estTel)) return toast("Teléfono inválido", "error");
+  if (!validarDireccion(data.estDir)) return toast("Dirección inválida", "error");
+  if (!data.cursoId) return toast("Debe seleccionar un curso", "warning");
 
   try {
     const resp = await fetch(API_ALUMNOS, {
@@ -458,53 +328,43 @@ async function crearAlumno(e) {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!resp.ok) throw new Error("Error al crear alumno");
 
-    toast("Alumno creado correctamente", "success");
-    bootstrap.Modal.getInstance(
-      document.getElementById("modalCrearAlumno")
-    ).hide();
+    if (!resp.ok) throw new Error();
 
+    toast("Alumno creado ✔️", "success");
+    bootstrap.Modal.getInstance(document.getElementById("modalCrearAlumno")).hide();
     await cargarAlumnos();
     renderAlumnos();
-  } catch (e) {
-    console.error(e);
-    toast("Error al crear alumno", "error");
+  } catch {
+    toast("Error creando alumno", "error");
   }
 }
 
 // ---------- Editar Alumno ----------
 
 async function abrirModalEditarAlumno(ced) {
-  const modalEl = document.getElementById("modalEditarAlumno");
-  const form = document.getElementById("formEditarAlumno");
-  if (!modalEl || !form) return;
-
   try {
     const resp = await fetch(`${API_ALUMNOS}/${ced}`, {
       headers: getHeaders(),
     });
-    if (!resp.ok) throw new Error("No se pudo cargar el alumno");
-
     const a = await resp.json();
+
+    const form = document.getElementById("formEditarAlumno");
+    cargarSelectCursos(form.cursoIdE);
 
     form.estCedE.value = a.estCed;
     form.estNomE.value = a.estNom;
     form.estApeE.value = a.estApe;
-    form.estTelE.value = a.estTel || "";
-    form.estDirE.value = a.estDir || "";
-
-    cargarSelectCursos(form.cursoIdE);
-    if (a.cursoId) form.cursoIdE.value = a.cursoId;
+    form.estTelE.value = a.estTel;
+    form.estDirE.value = a.estDir;
+    form.cursoIdE.value = a.cursoId;
 
     clearValidation(form);
     attachLiveValidation(form);
 
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
-  } catch (e) {
-    console.error(e);
-    toast("Error al cargar alumno", "error");
+    new bootstrap.Modal(document.getElementById("modalEditarAlumno")).show();
+  } catch {
+    toast("Error cargando alumno", "error");
   }
 }
 
@@ -512,71 +372,59 @@ async function actualizarAlumno(e) {
   e.preventDefault();
   const f = e.target;
 
-  const ced = f.estCedE.value;
-
   const data = {
     estNom: f.estNomE.value.trim(),
     estApe: f.estApeE.value.trim(),
     estTel: f.estTelE.value.trim(),
     estDir: f.estDirE.value.trim(),
-    cursoId: f.cursoIdE.value ? Number(f.cursoIdE.value) : null,
+    cursoId: Number(f.cursoIdE.value),
   };
 
-  if (!validarNombrePersona(data.estNom))
-    return toast("Nombre inválido", "warning");
-  if (!validarNombrePersona(data.estApe))
-    return toast("Apellido inválido", "warning");
-  if (!validarTelefono(data.estTel))
-    return toast("Teléfono inválido", "warning");
-  if (!validarDireccion(data.estDir))
-    return toast("Dirección inválida", "warning");
-  if (!data.cursoId)
-    return toast("Debe seleccionar un curso", "warning");
+  if (!validarNombrePersona(data.estNom)) return toast("Nombre inválido", "error");
+  if (!validarNombrePersona(data.estApe)) return toast("Apellido inválido", "error");
+  if (!validarTelefono(data.estTel)) return toast("Teléfono inválido", "error");
+  if (!validarDireccion(data.estDir)) return toast("Dirección inválida", "error");
+  if (!data.cursoId) return toast("Debe seleccionar un curso", "warning");
 
   try {
-    const resp = await fetch(`${API_ALUMNOS}/${ced}`, {
+    const resp = await fetch(`${API_ALUMNOS}/${f.estCedE.value}`, {
       method: "PUT",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!resp.ok) throw new Error("Error al actualizar alumno");
 
-    toast("Alumno actualizado", "success");
-    bootstrap.Modal.getInstance(
-      document.getElementById("modalEditarAlumno")
-    ).hide();
+    if (!resp.ok) throw new Error();
+
+    toast("Alumno actualizado ✔️", "success");
+    bootstrap.Modal.getInstance(document.getElementById("modalEditarAlumno")).hide();
 
     await cargarAlumnos();
     renderAlumnos();
-  } catch (e) {
-    console.error(e);
-    toast("No se pudo actualizar", "error");
+  } catch {
+    toast("Error actualizando alumno", "error");
   }
 }
 
 // ---------- Eliminar Alumno ----------
 
 async function eliminarAlumno(ced) {
-  if (!(await confirmDialog("Eliminar alumno", `¿Eliminar al alumno ${ced}?`)))
-    return;
+  if (!(await confirmDialog("Eliminar", `¿Eliminar al alumno ${ced}?`))) return;
 
   try {
-    const resp = await fetch(`${API_ALUMNOS}/${ced}`, {
+    await fetch(`${API_ALUMNOS}/${ced}`, {
       method: "DELETE",
       headers: getHeaders(),
     });
-    if (!resp.ok) throw new Error("Error al eliminar");
 
-    toast("Alumno eliminado", "success");
+    toast("Alumno eliminado ✔️", "success");
     await cargarAlumnos();
     renderAlumnos();
-  } catch (e) {
-    console.error(e);
+  } catch {
     toast("Error eliminando alumno", "error");
   }
 }
 
-// ---------- Consultar curso al que pertenece un alumno ----------
+// ---------- Ver curso de alumno ----------
 
 async function verCursoDeAlumno(ced) {
   try {
@@ -584,26 +432,21 @@ async function verCursoDeAlumno(ced) {
       headers: getHeaders(),
     });
 
-    if (!resp.ok) {
-      toast("El alumno no tiene curso asignado", "info");
-      return;
-    }
+    if (!resp.ok) return toast("Alumno sin curso asignado", "info");
 
-    const curso = await resp.json();
+    const c = await resp.json();
 
     Swal.fire({
       icon: "info",
-      title: "Curso del estudiante",
+      title: "Curso del alumno",
       html: `
-        <p><b>Cédula:</b> ${ced}</p>
-        <p><b>Curso:</b> ${curso.nombre}</p>
-        <p><b>Nivel:</b> ${curso.nivel}</p>
-        <p><b>Paralelo:</b> ${curso.paralelo}</p>
+        <p><b>Curso:</b> ${c.nombre}</p>
+        <p><b>Nivel:</b> ${c.nivel}</p>
+        <p><b>Paralelo:</b> ${c.paralelo}</p>
       `,
     });
-  } catch (e) {
-    console.error(e);
-    toast("Error consultando curso del estudiante", "error");
+  } catch {
+    toast("Error consultando curso", "error");
   }
 }
 
@@ -615,95 +458,57 @@ function renderCursos() {
   const tbody = document.getElementById("tbodyCursos");
   if (!tbody) return;
 
-  const filtered = applyCursosFilters();
-  const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / cursosPageSize));
+  let data = [...cursosData];
+
+  if (cursosFilters.nombre)
+    data = data.filter((c) => c.nombre.toLowerCase().includes(cursosFilters.nombre.toLowerCase()));
+
+  if (cursosFilters.nivel)
+    data = data.filter((c) => c.nivel.toLowerCase().includes(cursosFilters.nivel.toLowerCase()));
+
+  if (cursosFilters.paralelo)
+    data = data.filter((c) => c.paralelo.toLowerCase().includes(cursosFilters.paralelo.toLowerCase()));
+
+  if (cursosSearch)
+    data = data.filter((c) =>
+      `${c.nombre} ${c.nivel} ${c.paralelo}`.toLowerCase().includes(cursosSearch.toLowerCase())
+    );
+
+  const total = data.length;
+  const totalPages = Math.ceil(total / cursosPageSize);
 
   if (cursosPage > totalPages) cursosPage = totalPages;
 
-  const items = paginate(filtered, cursosPage, cursosPageSize);
+  const items = data.slice((cursosPage - 1) * cursosPageSize, cursosPage * cursosPageSize);
 
   tbody.innerHTML = items
     .map((c) => {
-      const cantidadEst = alumnosData.filter((a) => a.cursoId === c.id).length;
+      const cant = alumnosData.filter((a) => a.cursoId === c.id).length;
       return `
-        <tr>
-          <td>${c.id}</td>
-          <td>${c.nombre}</td>
-          <td>${c.nivel}</td>
-          <td>${c.paralelo}</td>
-          <td>${cantidadEst}</td>
-          <td class="text-center">
-            <button class="btn btn-sm btn-outline-info me-1"
-              onclick="verEstudiantesDelCurso(${c.id})">
-              Ver estudiantes
-            </button>
-            <button class="btn btn-sm btn-warning me-1"
-              onclick="abrirModalEditarCurso(${c.id})">
-              Editar
-            </button>
-            <button class="btn btn-sm btn-danger"
-              onclick="eliminarCurso(${c.id})">
-              Eliminar
-            </button>
-          </td>
-        </tr>
-      `;
+      <tr>
+        <td>${c.id}</td>
+        <td>${c.nombre}</td>
+        <td>${c.nivel}</td>
+        <td>${c.paralelo}</td>
+        <td>${cant}</td>
+        <td class="text-center">
+          <button class="btn btn-outline-info btn-sm" onclick="verEstudiantesDelCurso(${c.id})">Ver alumnos</button>
+          <button class="btn btn-warning btn-sm" onclick="abrirModalEditarCurso(${c.id})">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarCurso(${c.id})">Eliminar</button>
+        </td>
+      </tr>`;
     })
     .join("");
-
-  const info = document.getElementById("cursosPaginationInfo");
-  if (info) {
-    const start = total === 0 ? 0 : (cursosPage - 1) * cursosPageSize + 1;
-    const end = Math.min(cursosPage * cursosPageSize, total);
-    info.textContent = total
-      ? `Mostrando ${start}-${end} de ${total}`
-      : "Sin resultados";
-  }
-
-  const prev = document.getElementById("cursosPrev");
-  const next = document.getElementById("cursosNext");
-  if (prev) prev.disabled = cursosPage <= 1;
-  if (next) next.disabled = cursosPage >= totalPages;
 }
 
-function cursosCambioPagina(n) {
-  cursosPage += n;
-  renderCursos();
-}
-
-function cursosCambioSearch(input) {
-  cursosSearch = input.value.trim();
-  cursosPage = 1;
-  renderCursos();
-}
-
-function cursosCambioFiltros() {
-  const nom = document.getElementById("filterCursoNombre");
-  const niv = document.getElementById("filterCursoNivel");
-  const par = document.getElementById("filterCursoParalelo");
-
-  cursosFilters.nombre = nom ? nom.value.trim() : "";
-  cursosFilters.nivel = niv ? niv.value.trim() : "";
-  cursosFilters.paralelo = par ? par.value.trim() : "";
-
-  cursosPage = 1;
-  renderCursos();
-}
-
-// ---------- Crear Curso ----------
+// ---------- Crear curso ----------
 
 function abrirModalCrearCurso() {
-  const modalEl = document.getElementById("modalCrearCurso");
   const form = document.getElementById("formCrearCurso");
-  if (!modalEl || !form) return;
-
   form.reset();
   clearValidation(form);
   attachLiveValidation(form);
-
-  const modal = new bootstrap.Modal(modalEl);
-  modal.show();
+  new bootstrap.Modal(document.getElementById("modalCrearCurso")).show();
 }
 
 async function crearCurso(e) {
@@ -716,12 +521,9 @@ async function crearCurso(e) {
     paralelo: f.paralelo.value.trim(),
   };
 
-  if (!validarNombreCurso(data.nombre))
-    return toast("Nombre de curso inválido", "warning");
-  if (!validarNivel(data.nivel))
-    return toast("Nivel inválido", "warning");
-  if (!validarParalelo(data.paralelo))
-    return toast("Paralelo inválido", "warning");
+  if (!validarNombreCurso(data.nombre)) return toast("Nombre inválido", "warning");
+  if (!validarNivel(data.nivel)) return toast("Nivel inválido", "warning");
+  if (!validarParalelo(data.paralelo)) return toast("Paralelo inválido", "warning");
 
   try {
     const resp = await fetch(API_CURSOS, {
@@ -729,36 +531,29 @@ async function crearCurso(e) {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!resp.ok) throw new Error("Error al crear curso");
 
-    toast("Curso creado correctamente", "success");
-    bootstrap.Modal.getInstance(
-      document.getElementById("modalCrearCurso")
-    ).hide();
+    if (!resp.ok) throw new Error();
+
+    toast("Curso creado ✔️", "success");
+    bootstrap.Modal.getInstance(document.getElementById("modalCrearCurso")).hide();
 
     await cargarCursos();
     renderCursos();
-  } catch (e) {
-    console.error(e);
-    toast("Error al crear curso", "error");
+  } catch {
+    toast("Error creando curso", "error");
   }
 }
 
-// ---------- Editar Curso ----------
+// ---------- Editar curso ----------
 
 async function abrirModalEditarCurso(id) {
-  const modalEl = document.getElementById("modalEditarCurso");
-  const form = document.getElementById("formEditarCurso");
-  if (!modalEl || !form) return;
-
   try {
     const resp = await fetch(`${API_CURSOS}/${id}`, {
       headers: getHeaders(),
     });
-    if (!resp.ok) throw new Error("No se pudo cargar el curso");
-
     const c = await resp.json();
 
+    const form = document.getElementById("formEditarCurso");
     form.idE.value = c.id;
     form.nombreE.value = c.nombre;
     form.nivelE.value = c.nivel;
@@ -767,11 +562,9 @@ async function abrirModalEditarCurso(id) {
     clearValidation(form);
     attachLiveValidation(form);
 
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
-  } catch (e) {
-    console.error(e);
-    toast("Error al cargar curso", "error");
+    new bootstrap.Modal(document.getElementById("modalEditarCurso")).show();
+  } catch {
+    toast("Error cargando curso", "error");
   }
 }
 
@@ -779,66 +572,54 @@ async function actualizarCurso(e) {
   e.preventDefault();
   const f = e.target;
 
-  const id = f.idE.value;
-
   const data = {
     nombre: f.nombreE.value.trim(),
     nivel: f.nivelE.value.trim(),
     paralelo: f.paraleloE.value.trim(),
   };
 
-  if (!validarNombreCurso(data.nombre))
-    return toast("Nombre de curso inválido", "warning");
-  if (!validarNivel(data.nivel))
-    return toast("Nivel inválido", "warning");
-  if (!validarParalelo(data.paralelo))
-    return toast("Paralelo inválido", "warning");
+  if (!validarNombreCurso(data.nombre)) return toast("Nombre inválido", "warning");
+  if (!validarNivel(data.nivel)) return toast("Nivel inválido", "warning");
+  if (!validarParalelo(data.paralelo)) return toast("Paralelo inválido", "warning");
 
   try {
-    const resp = await fetch(`${API_CURSOS}/${id}`, {
+    await fetch(`${API_CURSOS}/${f.idE.value}`, {
       method: "PUT",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!resp.ok) throw new Error("Error al actualizar curso");
 
-    toast("Curso actualizado correctamente", "success");
-    bootstrap.Modal.getInstance(
-      document.getElementById("modalEditarCurso")
-    ).hide();
+    toast("Curso actualizado ✔️", "success");
+    bootstrap.Modal.getInstance(document.getElementById("modalEditarCurso")).hide();
 
     await cargarCursos();
     renderCursos();
-  } catch (e) {
-    console.error(e);
-    toast("Error al actualizar curso", "error");
+  } catch {
+    toast("Error actualizando curso", "error");
   }
 }
 
-// ---------- Eliminar Curso ----------
+// ---------- Eliminar curso ----------
 
 async function eliminarCurso(id) {
-  if (!(await confirmDialog("Eliminar curso", `¿Eliminar el curso ${id}?`)))
-    return;
+  if (!(await confirmDialog("Eliminar", "¿Eliminar este curso?"))) return;
 
   try {
-    const resp = await fetch(`${API_CURSOS}/${id}`, {
+    await fetch(`${API_CURSOS}/${id}`, {
       method: "DELETE",
       headers: getHeaders(),
     });
-    if (!resp.ok) throw new Error("Error al eliminar curso");
 
-    toast("Curso eliminado", "success");
+    toast("Curso eliminado ✔️", "success");
     await cargarCursos();
     await cargarAlumnos();
     renderCursos();
-  } catch (e) {
-    console.error(e);
-    toast("Error al eliminar curso", "error");
+  } catch {
+    toast("Error eliminando curso", "error");
   }
 }
 
-// ---------- Obtener todos los estudiantes que pertenecen a un curso ----------
+// ---------- Ver estudiantes por curso ----------
 
 async function verEstudiantesDelCurso(id) {
   try {
@@ -846,46 +627,33 @@ async function verEstudiantesDelCurso(id) {
       headers: getHeaders(),
     });
 
-    if (!resp.ok) throw new Error("Error consultando alumnos del curso");
+    if (!resp.ok) return toast("Error consultando alumnos", "error");
 
-    const alumnosCurso = await resp.json();
+    const list = await resp.json();
 
-    if (!alumnosCurso.length) {
-      Swal.fire({
+    if (!list.length) {
+      return Swal.fire({
         icon: "info",
         title: "Sin estudiantes",
-        text: "Este curso no tiene estudiantes asignados.",
+        text: "Este curso no tiene estudiantes asignados",
       });
-      return;
     }
-
-    const html = `
-      <ul class="list-group">
-        ${alumnosCurso
-          .map(
-            (a) =>
-              `<li class="list-group-item">
-                <b>${a.estCed}</b> - ${a.estNom} ${a.estApe}
-              </li>`
-          )
-          .join("")}
-      </ul>
-    `;
 
     Swal.fire({
       icon: "info",
       title: "Estudiantes del curso",
-      html,
+      html: list
+        .map((a) => `<p><b>${a.estCed}</b> - ${a.estNom} ${a.estApe}</p>`)
+        .join(""),
       width: 600,
     });
-  } catch (e) {
-    console.error(e);
-    toast("Error al obtener estudiantes del curso", "error");
+  } catch {
+    toast("Error al obtener estudiantes", "error");
   }
 }
 
 // ======================================================================
-// ========================= DASHBOARD ==================================
+// ========================= Dashboard ==================================
 // ======================================================================
 
 async function initDashboard() {
@@ -893,82 +661,59 @@ async function initDashboard() {
   ensureAdmin();
 
   try {
-    const [respAlumnos, respCursos] = await Promise.all([
+    const [respA, respC] = await Promise.all([
       fetch(API_ALUMNOS, { headers: getHeaders() }),
       fetch(API_CURSOS, { headers: getHeaders() }),
     ]);
 
-    if (!respAlumnos.ok || !respCursos.ok) {
-      throw new Error("Error cargando datos");
-    }
-
-    const alumnos = await respAlumnos.json();
-    const cursos = await respCursos.json();
+    const alumnos = await respA.json();
+    const cursos = await respC.json();
 
     document.getElementById("totalAlumnos").textContent = alumnos.length;
     document.getElementById("totalCursos").textContent = cursos.length;
     document.getElementById("userName").textContent =
-      localStorage.getItem("username") || "ADMIN";
+      localStorage.getItem("username");
 
     // Últimos 5 alumnos
-    const ultimos = alumnos.slice(-5);
-    const tbody = document.getElementById("tbodyUltimos");
-
-    tbody.innerHTML = ultimos
+    const ult = alumnos.slice(-5);
+    document.getElementById("tbodyUltimos").innerHTML = ult
       .map((a) => {
-        const curso = cursos.find((c) => c.id === a.cursoId);
+        const c = cursos.find((x) => x.id === a.cursoId);
         return `
-          <tr>
-            <td>${a.estCed}</td>
-            <td>${a.estNom} ${a.estApe}</td>
-            <td>${
-              curso
-                ? `${curso.nombre} (${curso.nivel}-${curso.paralelo})`
-                : "<span class='text-muted'>Sin curso</span>"
-            }</td>
-          </tr>
-        `;
+        <tr>
+          <td>${a.estCed}</td>
+          <td>${a.estNom} ${a.estApe}</td>
+          <td>${c ? `${c.nombre} (${c.nivel}-${c.paralelo})` : "Sin curso"}</td>
+        </tr>`;
       })
       .join("");
 
-    // Conteo alumnos por curso
+    // Gráfica alumnos por curso
     const conteo = {};
     alumnos.forEach((a) => {
-      const curso = cursos.find((c) => c.id === a.cursoId);
-      const key = curso
-        ? `${curso.nombre} (${curso.nivel}-${curso.paralelo})`
-        : "Sin curso";
+      const c = cursos.find((x) => x.id === a.cursoId);
+      const key = c ? `${c.nombre} ${c.nivel}-${c.paralelo}` : "Sin curso";
       conteo[key] = (conteo[key] || 0) + 1;
     });
 
     const labels = Object.keys(conteo);
     const data = Object.values(conteo);
 
-    const ctx = document.getElementById("chartAlumnosPorCurso");
-
-    if (ctx) {
-      new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Estudiantes por curso",
-              data,
-              backgroundColor: "rgba(0,123,255,0.6)",
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: { beginAtZero: true, ticks: { precision: 0 } },
+    new Chart(document.getElementById("chartAlumnosPorCurso"), {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Estudiantes",
+            data,
+            backgroundColor: "rgba(0,123,255,0.6)",
           },
-        },
-      });
-    }
-  } catch (e) {
-    console.error(e);
+        ],
+      },
+      options: { responsive: true },
+    });
+  } catch {
     toast("Error cargando dashboard", "error");
   }
 }
@@ -985,8 +730,8 @@ async function initAlumnosPage() {
   await cargarAlumnos();
   renderAlumnos();
 
-  const navUser = document.getElementById("userNameNav");
-  if (navUser) navUser.textContent = localStorage.getItem("username") || "";
+  document.getElementById("userNameNav").textContent =
+    localStorage.getItem("username");
 }
 
 async function initCursosPage() {
@@ -997,8 +742,8 @@ async function initCursosPage() {
   await cargarAlumnos();
   renderCursos();
 
-  const navUser = document.getElementById("userNameNav");
-  if (navUser) navUser.textContent = localStorage.getItem("username") || "ADMIN";
+  document.getElementById("userNameNav").textContent =
+    localStorage.getItem("username");
 }
 
 function initDashboardPage() {

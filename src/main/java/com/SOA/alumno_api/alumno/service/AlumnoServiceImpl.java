@@ -8,9 +8,9 @@ import com.soa.alumno_api.alumno.repo.AlumnoRepository;
 import com.soa.alumno_api.alumno.repo.CursoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class AlumnoServiceImpl implements AlumnoService {
@@ -24,51 +24,65 @@ public class AlumnoServiceImpl implements AlumnoService {
     }
 
     @Override
-    public Alumno buscar(String cedula) {
-        return alumnoRepo.findById(cedula).orElseThrow();
+    public Alumno buscarPorCedula(String cedula) {
+        return alumnoRepo.findById(cedula)
+                .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
     }
 
     @Override
     public Alumno crear(AlumnoCreateDto dto) {
+        if (alumnoRepo.existsById(dto.estCed())) {
+            throw new RuntimeException("Ya existe un alumno con esa cédula");
+        }
 
-        Curso curso = null;
-        if (dto.cursoId() != null)
-            curso = cursoRepo.findById(dto.cursoId()).orElseThrow();
+        Alumno a = new Alumno();
+        a.setEstCed(dto.estCed());
+        a.setEstNom(dto.estNom());
+        a.setEstApe(dto.estApe());
+        a.setEstDir(dto.estDir());
+        a.setEstTel(dto.estTel());
 
-        Alumno a = Alumno.builder()
-                .estCed(dto.estCed())
-                .estNom(dto.estNom())
-                .estApe(dto.estApe())
-                .estTel(dto.estTel())
-                .estDir(dto.estDir())
-                .curso(curso)
-                .build();
+        // Se crea sin curso asignado inicialmente
+        a.setCurso(null);
 
         return alumnoRepo.save(a);
     }
 
     @Override
     public Alumno actualizar(String cedula, AlumnoUpdateDto dto) {
-        Alumno a = buscar(cedula);
+
+        Alumno a = buscarPorCedula(cedula);
 
         a.setEstNom(dto.estNom());
         a.setEstApe(dto.estApe());
         a.setEstDir(dto.estDir());
         a.setEstTel(dto.estTel());
 
-        if (dto.cursoId() != null)
-            a.setCurso(cursoRepo.findById(dto.cursoId()).orElseThrow());
-
         return alumnoRepo.save(a);
     }
 
     @Override
     public void eliminar(String cedula) {
-        alumnoRepo.deleteById(cedula);
+        Alumno a = buscarPorCedula(cedula);
+        alumnoRepo.delete(a);
     }
 
     @Override
-    public Curso obtenerCurso(String cedula) {
-        return buscar(cedula).getCurso();
+    public Alumno asignarCurso(String cedula, Long cursoId) {
+
+        Alumno a = buscarPorCedula(cedula);
+
+        Curso c = cursoRepo.findById(cursoId)
+                .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
+
+        a.setCurso(c);
+
+        return alumnoRepo.save(a);
+    }
+
+    @Override
+    public Curso obtenerCursoDeAlumno(String cedula) {
+        Alumno a = buscarPorCedula(cedula);
+        return a.getCurso();
     }
 }

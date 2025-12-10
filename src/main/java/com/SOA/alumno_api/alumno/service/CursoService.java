@@ -2,12 +2,14 @@ package com.soa.alumno_api.alumno.service;
 
 import com.soa.alumno_api.alumno.dto.CursoCreateDTO;
 import com.soa.alumno_api.alumno.dto.CursoUpdateDTO;
+import com.soa.alumno_api.alumno.entity.Alumno;
 import com.soa.alumno_api.alumno.entity.Curso;
 
 import java.util.List;
 
 public interface CursoService {
 
+    // CRUD básico
     List<Curso> listar();
 
     Curso buscarPorId(Long id);
@@ -18,6 +20,6 @@ public interface CursoService {
 
     void eliminar(Long id);
 
-    // Obtener todos los estudiantes que pertenecen a un curso
-    List<?> listarEstudiantes(Long cursoId);
+    // 🔹 Obtener todos los estudiantes que pertenecen a un curso
+    List<Alumno> listarEstudiantes(Long cursoId);
 }

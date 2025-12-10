@@ -2,6 +2,7 @@ package com.soa.alumno_api.alumno.web;
 
 import com.soa.alumno_api.alumno.dto.CursoCreateDTO;
 import com.soa.alumno_api.alumno.dto.CursoUpdateDTO;
+import com.soa.alumno_api.alumno.entity.Alumno;
 import com.soa.alumno_api.alumno.entity.Curso;
 import com.soa.alumno_api.alumno.service.CursoService;
 import jakarta.validation.Valid;
@@ -45,5 +46,11 @@ public class CursoController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@PathVariable Long id) {
         service.eliminar(id);
+    }
+
+    // 🔹 Obtener todos los estudiantes que pertenecen a un curso
+    @GetMapping("/{id}/alumnos")
+    public List<Alumno> alumnosDeCurso(@PathVariable Long id) {
+        return service.listarEstudiantes(id);
     }
 }

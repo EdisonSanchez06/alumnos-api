@@ -11,10 +11,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 @RestController
 @RequestMapping("/api/alumnos")
+@CrossOrigin(origins = {"*"})
 @RequiredArgsConstructor
-@CrossOrigin("*")
 public class AlumnoController {
 
     private final AlumnoService service;
@@ -24,31 +25,41 @@ public class AlumnoController {
         return service.listar();
     }
 
-    @GetMapping("/{ced}")
-    public Alumno obtener(@PathVariable String ced) {
-        return service.buscar(ced);
-    }
-
-    @GetMapping("/{ced}/curso")
-    public Curso cursoDeAlumno(@PathVariable String ced) {
-        return service.obtenerCurso(ced);
+    @GetMapping("/{cedula}")
+    public Alumno obtener(@PathVariable String cedula) {
+        return service.buscarPorCedula(cedula);
     }
 
     @PostMapping
-    public Alumno crear(@RequestBody AlumnoCreateDto dto) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public Alumno crear(@Valid @RequestBody AlumnoCreateDto dto) {
         return service.crear(dto);
     }
 
-    @PutMapping("/{ced}")
-    public Alumno actualizar(
-            @PathVariable String ced,
-            @RequestBody AlumnoUpdateDto dto
-    ) {
-        return service.actualizar(ced, dto);
+    @PutMapping("/{cedula}")
+    public Alumno actualizar(@PathVariable String cedula,
+                             @Valid @RequestBody AlumnoUpdateDto dto) {
+        return service.actualizar(cedula, dto);
     }
 
-    @DeleteMapping("/{ced}")
-    public void eliminar(@PathVariable String ced) {
-        service.eliminar(ced);
+    @DeleteMapping("/{cedula}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void eliminar(@PathVariable String cedula) {
+        service.eliminar(cedula);
+    }
+
+    // 🔹 Asignar un estudiante a un curso
+    @PutMapping("/{cedula}/curso/{cursoId}")
+    public Alumno asignarCurso(
+            @PathVariable String cedula,
+            @PathVariable Long cursoId
+    ) {
+        return service.asignarCurso(cedula, cursoId);
+    }
+
+    // 🔹 Consultar el curso al que pertenece un estudiante
+    @GetMapping("/{cedula}/curso")
+    public Curso cursoDeAlumno(@PathVariable String cedula) {
+        return service.obtenerCursoDeAlumno(cedula);
     }
 }
