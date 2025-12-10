@@ -9,6 +9,9 @@ const API_CURSOS = API_BASE + "/api/cursos";
 let alumnosData = [];
 let cursosData = [];
 
+let chartAlumnos = null;   // gráfico alumnos por curso
+let chartNiveles = null;   // gráfico alumnos por nivel
+
 let alumnosPage = 1;
 const alumnosPageSize = 5;
 
@@ -164,21 +167,20 @@ function validarDireccion(dir) {
   return dir.trim().length >= 5;
 }
 
+// Solo letras (con tildes) y espacios, entre 3 y 40 caracteres
 function validarNombreCurso(txt) {
-  // Solo letras (con tildes) y espacios, entre 3 y 40 caracteres
   return /^[A-Za-zÁÉÍÓÚÑáéíóúñ ]{3,40}$/.test(txt);
 }
 
-
+// Solo letras para nivel (sin números)
 function validarNivel(niv) {
   return /^[A-Za-zÁÉÍÓÚÑáéíóúñ ]{1,20}$/.test(niv);
 }
 
-
+// Solo UNA letra mayúscula
 function validarParalelo(par) {
   return /^[A-Z]{1}$/.test(par);
 }
-
 
 function attachLiveValidation(form) {
   const inputs = form.querySelectorAll(
@@ -205,14 +207,21 @@ function clearValidation(form) {
 // obtiene el id de curso desde distintas formas del DTO
 function getAlumnoCursoId(a) {
   if (!a) return null;
-  if (a.cursoId != null) return a.cursoId;
-  if (a.curso && a.curso.id != null) return a.curso.id;
+
+  // caso 1: backend envía cursoId directamente
+  if (a.cursoId != null) return Number(a.cursoId);
+
+  // caso 2: backend envía objeto curso
+  if (a.curso && a.curso.id != null) return Number(a.curso.id);
+
   return null;
 }
 
 function getCursoById(id) {
   if (!id || !Array.isArray(cursosData)) return null;
-  return cursosData.find((c) => String(c.id) === String(id)) || null;
+  return (
+    cursosData.find((c) => Number(c.id) === Number(id)) || null
+  );
 }
 
 // devuelve etiqueta bonita del curso
@@ -809,42 +818,39 @@ async function crearCurso(e) {
 
   const data = {
     nombre: f.nombre.value.trim(),
-    nivel: f.nivel.value.trim(),
-    paralelo: f.paralelo.value.trim().toUpperCase(), // 🔥 normalizamos
+    nivel: f.nivel.value.trim().toLowerCase(),
+    paralelo: f.paralelo.value.trim().toUpperCase(),
   };
 
   if (!validarNombreCurso(data.nombre))
     return toast("Nombre de curso inválido (solo letras, mínimo 3)", "warning");
   if (!validarNivel(data.nivel)) return toast("Nivel inválido", "warning");
   if (!validarParalelo(data.paralelo))
-    return toast("Paralelo inválido", "warning");
+    return toast("Paralelo inválido (una sola letra A-Z)", "warning");
 
- try {
-     const resp = await fetch(API_CURSOS, {
-         method: "POST",
-         headers: getHeaders(),
-         body: JSON.stringify(data),
-     });
+  try {
+    const resp = await fetch(API_CURSOS, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
 
-     if (!resp.ok) {
-         const msg = await resp.text();
-         throw new Error(msg);
-     }
+    if (!resp.ok) {
+      const msg = await resp.text();
+      throw new Error(msg);
+    }
 
-     toast("Curso creado ✔️", "success");
-     bootstrap.Modal.getInstance(
-         document.getElementById("modalCrearCurso")
-     ).hide();
+    toast("Curso creado ✔️", "success");
+    bootstrap.Modal.getInstance(
+      document.getElementById("modalCrearCurso")
+    ).hide();
 
-     await cargarCursos();
-     renderCursos();
-
- } catch (err) {
-     toast(err.message || "Error creando curso", "error");
- }
-
+    await cargarCursos();
+    renderCursos();
+  } catch (err) {
+    toast(err.message || "Error creando curso", "error");
+  }
 }
-
 
 // ----- Editar curso -----
 
@@ -880,7 +886,7 @@ async function actualizarCurso(e) {
 
   const data = {
     nombre: f.nombreE.value.trim(),
-    nivel: f.nivelE.value.trim(),
+    nivel: f.nivelE.value.trim().toLowerCase(),
     paralelo: f.paraleloE.value.trim().toUpperCase(),
   };
 
@@ -888,7 +894,7 @@ async function actualizarCurso(e) {
     return toast("Nombre de curso inválido (solo letras, mínimo 3)", "warning");
   if (!validarNivel(data.nivel)) return toast("Nivel inválido", "warning");
   if (!validarParalelo(data.paralelo))
-    return toast("Paralelo inválido", "warning");
+    return toast("Paralelo inválido (una sola letra A-Z)", "warning");
 
   try {
     const resp = await fetch(`${API_CURSOS}/${f.idE.value}`, {
@@ -912,7 +918,6 @@ async function actualizarCurso(e) {
     toast(err.message || "Error actualizando curso", "error");
   }
 }
-
 
 // ----- Eliminar curso -----
 
@@ -974,6 +979,146 @@ async function verEstudiantesDelCurso(id) {
 // =======================  DASHBOARD  ==================================
 // ======================================================================
 
+// Construye gráfico de barras por curso
+function buildChart(conteo) {
+  const ctx = document.getElementById("chartAlumnosPorCurso");
+  if (!ctx) return;
+
+  if (chartAlumnos) chartAlumnos.destroy();
+
+  chartAlumnos = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: Object.keys(conteo),
+      datasets: [
+        {
+          label: "Estudiantes por curso",
+          data: Object.values(conteo),
+          backgroundColor: "rgba(0,123,255,0.6)",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } },
+      },
+    },
+  });
+}
+
+// Construye gráfico de pastel por nivel
+function buildNivelChart(conteo) {
+  const ctx = document.getElementById("chartAlumnosPorNivel");
+  if (!ctx) return;
+
+  if (chartNiveles) chartNiveles.destroy();
+
+  chartNiveles = new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: Object.keys(conteo),
+      datasets: [
+        {
+          label: "Estudiantes por nivel",
+          data: Object.values(conteo),
+          backgroundColor: [
+            "rgba(54, 162, 235, 0.7)",
+            "rgba(255, 99, 132, 0.7)",
+            "rgba(255, 206, 86, 0.7)",
+            "rgba(75, 192, 192, 0.7)",
+            "rgba(153, 102, 255, 0.7)",
+            "rgba(255, 159, 64, 0.7)",
+          ],
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: "bottom" },
+      },
+    },
+  });
+}
+
+// Carga opciones para filtros del dashboard
+function cargarFiltrosCursos(cursos) {
+  const filtroCurso = document.getElementById("filtroCurso");
+  const filtroNivel = document.getElementById("filtroNivel");
+  const filtroParalelo = document.getElementById("filtroParalelo");
+
+  if (!filtroCurso || !filtroNivel || !filtroParalelo) return;
+
+  filtroCurso.innerHTML = `<option value="">Todos</option>`;
+  filtroNivel.innerHTML = `<option value="">Todos</option>`;
+  filtroParalelo.innerHTML = `<option value="">Todos</option>`;
+
+  const nombres = new Set();
+  const niveles = new Set();
+  const paralelos = new Set();
+
+  cursos.forEach((c) => {
+    if (c.nombre) nombres.add(c.nombre);
+    if (c.nivel) niveles.add(c.nivel);
+    if (c.paralelo) paralelos.add(c.paralelo);
+  });
+
+  [...nombres].forEach(
+    (n) => (filtroCurso.innerHTML += `<option value="${n}">${n}</option>`)
+  );
+  [...niveles].forEach(
+    (n) => (filtroNivel.innerHTML += `<option value="${n}">${n}</option>`)
+  );
+  [...paralelos].forEach(
+    (p) => (filtroParalelo.innerHTML += `<option value="${p}">${p}</option>`)
+  );
+}
+
+// Aplica filtros y reconstruye ambos gráficos
+function filtrarGrafico() {
+  const filtroCurso = document.getElementById("filtroCurso");
+  const filtroNivel = document.getElementById("filtroNivel");
+  const filtroParalelo = document.getElementById("filtroParalelo");
+
+  const cursoSel = filtroCurso ? filtroCurso.value : "";
+  const nivelSel = filtroNivel ? filtroNivel.value : "";
+  const paraleloSel = filtroParalelo ? filtroParalelo.value : "";
+
+  const conteoCursos = {};
+  const conteoNiveles = {};
+
+  alumnosData.forEach((a) => {
+    const cursoId = getAlumnoCursoId(a);
+    const curso = cursosData.find((c) => Number(c.id) === Number(cursoId));
+
+    // aplicar filtros
+    if (curso) {
+      if (cursoSel && curso.nombre !== cursoSel) return;
+      if (nivelSel && curso.nivel !== nivelSel) return;
+      if (paraleloSel && curso.paralelo !== paraleloSel) return;
+    } else {
+      // alumno sin curso -> mostrar solo si no se está filtrando
+      if (cursoSel || nivelSel || paraleloSel) return;
+    }
+
+    // gráfico por curso
+    const keyCurso = curso
+      ? `${curso.nombre} (${curso.nivel}-${curso.paralelo})`
+      : "Sin curso";
+
+    conteoCursos[keyCurso] = (conteoCursos[keyCurso] || 0) + 1;
+
+    // gráfico por niveles
+    const keyNivel = curso ? curso.nivel : "Sin curso";
+    conteoNiveles[keyNivel] = (conteoNiveles[keyNivel] || 0) + 1;
+  });
+
+  buildChart(conteoCursos);
+  buildNivelChart(conteoNiveles);
+}
+
+// Init dashboard
 async function initDashboard() {
   loadTheme();
   ensureAdmin();
@@ -986,67 +1131,41 @@ async function initDashboard() {
 
     if (!respA.ok || !respC.ok) throw new Error();
 
-    const alumnos = await respA.json();
-    const cursos = await respC.json();
+    alumnosData = await respA.json();
+    cursosData = await respC.json();
 
-    document.getElementById("totalAlumnos").textContent = alumnos.length;
-    document.getElementById("totalCursos").textContent = cursos.length;
+    document.getElementById("totalAlumnos").textContent = alumnosData.length;
+    document.getElementById("totalCursos").textContent = cursosData.length;
     document.getElementById("userName").textContent =
       localStorage.getItem("username") || "ADMIN";
 
     // últimos 5 alumnos
-    const ult = alumnos.slice(-5);
-    document.getElementById("tbodyUltimos").innerHTML = ult
-      .map((a) => {
-        const curso = getCursoById(getAlumnoCursoId(a));
-        return `
-          <tr>
-            <td>${a.estCed}</td>
-            <td>${a.estNom} ${a.estApe}</td>
-            <td>${
-              curso
-                ? `${curso.nombre} (${curso.nivel}-${curso.paralelo})`
-                : "<span class='text-muted'>Sin curso</span>"
-            }</td>
-          </tr>`;
-      })
-      .join("");
-
-    // gráfico alumnos por curso
-    const conteo = {};
-    alumnos.forEach((a) => {
-      const curso = getCursoById(getAlumnoCursoId(a));
-      const key = curso
-        ? `${curso.nombre} (${curso.nivel}-${curso.paralelo})`
-        : "Sin curso";
-      conteo[key] = (conteo[key] || 0) + 1;
-    });
-
-    const labels = Object.keys(conteo);
-    const data = Object.values(conteo);
-
-    const ctx = document.getElementById("chartAlumnosPorCurso");
-    if (ctx) {
-      new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Estudiantes por curso",
-              data,
-              backgroundColor: "rgba(0,123,255,0.6)",
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: { beginAtZero: true, ticks: { precision: 0 } },
-          },
-        },
-      });
+    const ult = alumnosData.slice(-5);
+    const tbodyUlt = document.getElementById("tbodyUltimos");
+    if (tbodyUlt) {
+      tbodyUlt.innerHTML = ult
+        .map((a) => {
+          const cursoId = getAlumnoCursoId(a);
+          const curso = cursosData.find(
+            (c) => Number(c.id) === Number(cursoId)
+          );
+          return `
+            <tr>
+              <td>${a.estCed}</td>
+              <td>${a.estNom} ${a.estApe}</td>
+              <td>${
+                curso
+                  ? `${curso.nombre} (${curso.nivel}-${curso.paralelo})`
+                  : "<span class='text-muted'>Sin curso</span>"
+              }</td>
+            </tr>`;
+        })
+        .join("");
     }
+
+    // cargar filtros y construir gráficos
+    cargarFiltrosCursos(cursosData);
+    filtrarGrafico();
   } catch (e) {
     console.error(e);
     toast("Error cargando dashboard", "error");

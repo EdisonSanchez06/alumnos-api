@@ -55,12 +55,16 @@
             background: linear-gradient(135deg, #ef6c00, #ff9800);
         }
 
-        .card table thead {
-            background: #e8f0ff;
-        }
-
         .rounded-box {
             border-radius: 14px;
+        }
+
+        .filter-box select {
+            border-radius: 10px;
+        }
+
+        .chart-container {
+            height: 330px;
         }
     </style>
 
@@ -120,7 +124,6 @@
 
     <!-- ESTADISTICAS -->
     <div class="row g-4">
-
         <div class="col-md-4">
             <div class="card-stat card-blue d-flex justify-content-between align-items-center">
                 <div>
@@ -150,22 +153,61 @@
                 <i class="bi bi-clock-history"></i>
             </div>
         </div>
-
     </div>
 
-    <!-- GRAFICO -->
+    <!-- FILTROS -->
     <div class="card shadow-sm mt-4 p-4 rounded-box">
-        <h5 class="mb-3 fw-bold">📈 Estudiantes por Curso</h5>
-        <canvas id="chartAlumnosPorCurso" height="100"></canvas>
+        <h5 class="mb-3 fw-bold">🔍 Filtros del Dashboard</h5>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label>Curso</label>
+                <select id="filtroCurso" class="form-select"></select>
+            </div>
+
+            <div class="col-md-4">
+                <label>Nivel</label>
+                <select id="filtroNivel" class="form-select"></select>
+            </div>
+
+            <div class="col-md-4">
+                <label>Paralelo</label>
+                <select id="filtroParalelo" class="form-select"></select>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRAFICOS -->
+    <div class="row mt-4 g-4">
+
+        <!-- GRAFICO POR CURSO -->
+        <div class="col-md-7">
+            <div class="card shadow-sm p-4 rounded-box">
+                <h5 class="mb-3 fw-bold">📈 Estudiantes por Curso</h5>
+                <div class="chart-container">
+                    <canvas id="chartAlumnosPorCurso"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- GRAFICO POR NIVEL -->
+        <div class="col-md-5">
+            <div class="card shadow-sm p-4 rounded-box">
+                <h5 class="mb-3 fw-bold">📊 Estudiantes por Nivel</h5>
+                <div class="chart-container">
+                    <canvas id="chartAlumnosPorNivel"></canvas>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- ÚLTIMOS ESTUDIANTES -->
     <div class="card shadow-sm mt-4 p-4 rounded-box">
-
         <h5 class="fw-bold mb-3">🧾 Últimos Estudiantes Registrados</h5>
 
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-hover align-middle">
                 <thead>
                 <tr>
                     <th>Cédula</th>
